@@ -25,7 +25,7 @@ El layout sigue sin dibujar contenido: solo calcula geometría. El renderer coor
 Limitaciones actuales:
 
 - no procesa batches;
-- no está integrado en ComfyUI.
+- la integración backend existe, pero todavía no se ha probado durante el arranque real de ComfyUI.
 
 ## `grid_2x2`
 
@@ -56,6 +56,8 @@ Reglas actuales:
 - 4 imágenes -> `grid_2x2`.
 
 La decisión se basa en el número real de imágenes activas, por lo que las entradas opcionales desconectadas no dejan huecos ni alteran el conteo.
+
+La capa ComfyUI expone `vertical_stack`, `grid_2x2` y `auto_social` mediante el input `layout`. El renderer puro resuelve el layout efectivo antes de dibujar.
 
 ## Pendientes
 

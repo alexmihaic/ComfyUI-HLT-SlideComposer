@@ -56,6 +56,19 @@ def first_frame_to_pillow(tensor_like: Any) -> Image.Image:
     return numpy_to_pillow(array[0])
 
 
+def mask_like_to_pillow(tensor_like: Any) -> Image.Image:
+    value = tensor_like
+    for method_name in ("detach", "cpu", "numpy"):
+        method = getattr(value, method_name, None)
+        if callable(method):
+            value = method()
+    array = np.asarray(value)
+    mask = _first_mask_frame(array)
+    clipped = np.clip(mask.astype(np.float32, copy=False), 0.0, 1.0)
+    uint8 = np.rint(clipped * 255.0).astype(np.uint8)
+    return Image.fromarray(uint8, mode="L")
+
+
 def pillow_to_bhwc_numpy(image: Image.Image) -> np.ndarray:
     return pillow_to_numpy(image)[np.newaxis, ...]
 
@@ -78,3 +91,17 @@ def _validate_bhwc_rgb_array(array: np.ndarray) -> np.ndarray:
             )
         )
     return np.clip(array.astype(np.float32, copy=False), 0.0, 1.0)
+
+
+def _first_mask_frame(array: np.ndarray) -> np.ndarray:
+    if array.ndim == 2:
+        return array
+    if array.ndim == 3:
+        return array[0]
+    if array.ndim == 4 and array.shape[3] == 1:
+        return array[0, :, :, 0]
+    raise InvalidTensorError(
+        prefixed_message(
+            "Expected a ComfyUI mask tensor with shape [B, H, W], [H, W], or [B, H, W, 1]."
+        )
+    )

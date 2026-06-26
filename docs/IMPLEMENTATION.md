@@ -57,7 +57,17 @@ Fase 5 completó el motor puro de layouts:
 - debug con indicación del layout efectivo;
 - outputs visuales sintéticos de revisión.
 
-No existe todavía `nodes.py` ni integración con ComfyUI.
+Fase 6A añadió la capa backend de integración ComfyUI dentro del repositorio:
+
+- `nodes.py` define `HLTSlideComposer`;
+- `__init__.py` raíz exporta únicamente los mappings de ComfyUI;
+- `INPUT_TYPES` declara imágenes, máscara, formato, layout, textos, fondo, tipografía, geometría, borde, logo y debug;
+- el nodo convierte `IMAGE` de ComfyUI a Pillow usando el primer frame;
+- el nodo convierte `MASK` a Pillow `L` y conserva la opción `invert_logo_mask`;
+- la salida vuelve como tensor `IMAGE` `[1,H,W,3]`, `float32`, rango `0.0-1.0`;
+- `scripts/validate_node_integration.py` valida el contrato sin copiar el repositorio a `custom_nodes`.
+
+El nodo todavía no se ha instalado físicamente en ComfyUI, no se ha validado durante el arranque real y no existe workflow JSON exportado desde ComfyUI.
 
 ## Principio de arquitectura
 
@@ -68,6 +78,8 @@ El paquete `hlt_slide` debe permanecer desacoplado de ComfyUI. La integración f
 La lógica de logo vive en `hlt_slide.logo_utils` porque combina escalado proporcional, máscaras e interpolación alpha. El renderer solo coordina el footer y el orden de composición.
 
 La selección de layout vive en `hlt_slide.layouts`. `auto_social` no dibuja: decide de forma determinista entre `vertical_stack` y `grid_2x2` según el número real de imágenes activas.
+
+La capa `nodes.py` debe seguir siendo fina: no contiene layout, crop, texto ni composición alpha. Solo ordena inputs, convierte tensores, construye `RenderSettings`, llama al renderer y devuelve el tensor final.
 
 ## Orden de composición actual
 

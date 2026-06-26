@@ -50,6 +50,13 @@ class RenderSettings:
     max_label_lines: int = 2
     uppercase_title: bool = True
     uppercase_labels: bool = False
+    outer_margin: int = 64
+    top_margin: int = 60
+    bottom_margin: int = 54
+    title_gap: int = 36
+    block_gap: int = 30
+    image_label_gap: int = 14
+    inner_padding: int = 30
     image_fit: str = "cover"
     crop_anchor: str = "center"
     corner_radius: int = 18
@@ -94,6 +101,7 @@ def render_vertical_stack(
     layout = _calculate_layout(
         effective_layout,
         canvas_size,
+        render_settings=render_settings,
         image_count=len(active_items),
         title_height=title_fit.height if title_fit is not None else 0,
         label_heights=tuple(label.height if label is not None else 0 for label in label_fits),
@@ -131,6 +139,7 @@ def _calculate_layout(
     layout_name: str,
     canvas_size: CanvasSize,
     *,
+    render_settings: RenderSettings,
     image_count: int,
     title_height: int,
     label_heights: tuple[int, ...],
@@ -145,7 +154,15 @@ def _calculate_layout(
             label_heights=label_heights,
             reserve_footer=reserve_footer,
             footer_height=footer_height,
-            metrics=VerticalStackMetrics(footer_height=footer_height),
+            metrics=VerticalStackMetrics(
+                outer_margin=render_settings.outer_margin,
+                top_margin=render_settings.top_margin,
+                bottom_margin=render_settings.bottom_margin,
+                title_gap=render_settings.title_gap,
+                block_gap=render_settings.block_gap,
+                image_label_gap=render_settings.image_label_gap,
+                footer_height=footer_height,
+            ),
         )
     if layout_name == "grid_2x2":
         return calculate_grid_2x2(
@@ -155,7 +172,16 @@ def _calculate_layout(
             label_heights=label_heights,
             reserve_footer=reserve_footer,
             footer_height=footer_height,
-            metrics=GridMetrics(footer_height=footer_height),
+            metrics=GridMetrics(
+                outer_margin=render_settings.outer_margin,
+                top_margin=render_settings.top_margin,
+                bottom_margin=render_settings.bottom_margin,
+                title_gap=render_settings.title_gap,
+                row_gap=render_settings.block_gap,
+                column_gap=render_settings.inner_padding,
+                image_label_gap=render_settings.image_label_gap,
+                footer_height=footer_height,
+            ),
         )
     raise HLTSlideError(prefixed_message(f"Unsupported layout: {layout_name!r}."))
 

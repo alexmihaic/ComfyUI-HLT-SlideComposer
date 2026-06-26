@@ -28,3 +28,8 @@ Todos los cambios relevantes de este proyecto se documentarán en este archivo.
 - Integración del renderer con `vertical_stack`, `grid_2x2` y `auto_social`.
 - Tests unitarios de grid y auto social.
 - Script de generación visual `scripts/generate_phase5_outputs.py`.
+- Capa backend de ComfyUI con `HLTSlideComposer`, `nodes.py`, mappings y salida `IMAGE`.
+- Conversión de entradas `IMAGE` y `MASK` para ejecutar el renderer puro desde el nodo.
+- Tests de contrato del nodo y tests de ejecución marcados para Torch.
+- Script `scripts/validate_node_integration.py` para validar la integración sin instalar en `custom_nodes`.
+- Plan de primera prueba manual en `docs/FIRST_TEST_PLAN.md`.

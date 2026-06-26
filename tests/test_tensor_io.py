@@ -8,6 +8,7 @@ from PIL import Image
 
 from hlt_slide.exceptions import HLTSlideError, InvalidTensorError
 from hlt_slide.tensor_io import (
+    mask_like_to_pillow,
     numpy_to_pillow,
     pillow_to_numpy,
     tensor_like_to_numpy,
@@ -82,6 +83,26 @@ def test_tensor_like_to_numpy_validates_comfyui_image_shape() -> None:
 
     with pytest.raises(InvalidTensorError):
         tensor_like_to_numpy(np.zeros((1, 2, 3, 4), dtype=np.float32))
+
+
+def test_mask_like_to_pillow_accepts_comfyui_mask_shapes() -> None:
+    batched = np.zeros((1, 2, 3), dtype=np.float32)
+    batched[0, 0, 0] = 1.0
+    channel = np.zeros((1, 2, 3, 1), dtype=np.float32)
+    channel[0, 1, 2, 0] = 0.5
+
+    image = mask_like_to_pillow(batched)
+    channel_image = mask_like_to_pillow(channel)
+
+    assert image.mode == "L"
+    assert image.size == (3, 2)
+    assert image.getpixel((0, 0)) == 255
+    assert channel_image.getpixel((2, 1)) == 128
+
+
+def test_mask_like_to_pillow_rejects_invalid_mask_shape() -> None:
+    with pytest.raises(InvalidTensorError):
+        mask_like_to_pillow(np.zeros((1, 2, 3, 2), dtype=np.float32))
 
 
 def test_torch_creation_reports_actionable_error_when_torch_missing(monkeypatch: pytest.MonkeyPatch) -> None:

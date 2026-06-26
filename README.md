@@ -13,8 +13,9 @@ Este repositorio tiene completadas estas fases del motor puro:
 - Fase 3: layout `vertical_stack` y renderer Pillow con fondo sólido.
 - Fase 4: fondo de imagen, overlay, logo, máscara y composición alpha.
 - Fase 5: layout `grid_2x2`, selector `auto_social` y renderer puro multi-layout.
+- Fase 6A: capa backend de integración ComfyUI dentro del repositorio.
 
-Todavía no está listo para instalarse ni usarse dentro de ComfyUI. No existe aún `nodes.py` ni workflow de ComfyUI.
+Todavía no se ha instalado físicamente en ComfyUI ni se ha validado durante el arranque real de ComfyUI. No existe aún un workflow JSON exportado desde ComfyUI.
 
 ## Problema que resolverá
 
@@ -45,6 +46,7 @@ El proyecto separa el motor puro de composición de la integración con ComfyUI:
 - `scripts/`: scripts locales de validación y generación visual.
 
 En fases posteriores, `nodes.py` será solo la capa de adaptación a ComfyUI: definirá inputs, convertirá tensores, llamará al renderer y devolverá el tensor final.
+En el estado actual, `nodes.py` ya existe como capa fina de backend y mantiene la lógica visual dentro de `hlt_slide/`.
 
 ## Módulos disponibles
 
@@ -57,6 +59,7 @@ En fases posteriores, `nodes.py` será solo la capa de adaptación a ComfyUI: de
 - `hlt_slide.layouts`: geometría pura de `vertical_stack`, `grid_2x2` y `auto_social`.
 - `hlt_slide.logo_utils`: escalado, máscara y composición del logo.
 - `hlt_slide.renderer`: renderer Pillow puro con fondo, contenido, logo y selección de layout.
+- `nodes.py`: integración ComfyUI, conversión de `IMAGE`/`MASK`, mappings y contrato del nodo.
 
 ## Preparar entorno de desarrollo
 
@@ -91,6 +94,7 @@ Pruebas por área ya disponibles:
 .\.venv\Scripts\python.exe -m pytest tests/test_logo_mask.py -q
 .\.venv\Scripts\python.exe -m pytest tests/test_grid_2x2.py -q
 .\.venv\Scripts\python.exe -m pytest tests/test_auto_social.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_node_contract.py -q
 ```
 
 ## Validación con Python de ComfyUI
@@ -102,8 +106,37 @@ El núcleo puro se validó con el Python embebido de ComfyUI sin instalar paquet
 - NumPy 1.26.4
 - Torch 2.9.1+cu130
 
-Esta validación no significa que el custom node completo esté integrado en ComfyUI.
+La capa backend del nodo también se valida sin instalar el plugin mediante:
+
+```powershell
+$ComfyPython = "C:\IAstuff\STUDIO344\App\python_embeded\python.exe"
+& $ComfyPython scripts\validate_node_integration.py
+```
+
+Esta validación no sustituye la prueba de arranque real de ComfyUI con el nodo instalado.
 
 ## Instalación en ComfyUI
 
-No instales todavía este repositorio en `custom_nodes`. La integración con ComfyUI se realizará después de validar el renderer independiente y crear la capa `nodes.py`.
+No se ha ejecutado todavía ninguna instalación en `custom_nodes`.
+
+Método recomendado actual, para ejecutar manualmente en la siguiente fase:
+
+```powershell
+cd C:\IAstuff\STUDIO344\App\ComfyUI\custom_nodes
+git clone https://github.com/alexmihaic/ComfyUI-HLT-SlideComposer.git
+```
+
+Si Pillow y NumPy ya están presentes en el Python de ComfyUI con versiones compatibles, no ejecutes `pip install`.
+
+Después:
+
+1. reiniciar ComfyUI;
+2. revisar la consola;
+3. buscar `HLT · Slide Composer`;
+4. ejecutar el plan de primera prueba en `docs/FIRST_TEST_PLAN.md`.
+
+## Desinstalación o rollback
+
+1. cerrar ComfyUI;
+2. borrar la carpeta `ComfyUI-HLT-SlideComposer`, o renombrarla con sufijo `.disabled`;
+3. reiniciar ComfyUI.
