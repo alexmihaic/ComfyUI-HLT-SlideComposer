@@ -14,6 +14,8 @@ import PIL
 import torch
 
 from hlt_slide.tensor_io import pillow_to_bhwc_numpy, torch_from_numpy_image
+from hlt_slide.config import CanvasSize
+from hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
 
 
 def main() -> int:
@@ -35,6 +37,27 @@ def main() -> int:
 
     inspected = tensor.detach().cpu().numpy()
     assert inspected.shape == (1, 6, 8, 3)
+    background = Image.new("RGB", (24, 24), (60, 80, 120))
+    logo = Image.new("RGBA", (20, 10), (255, 0, 0, 128))
+    mask = Image.new("L", (10, 5), 255)
+    rendered = render_vertical_stack(
+        [SlideItem(Image.new("RGB", (16, 16), (20, 200, 80)), "OK")],
+        title="RUNTIME",
+        canvas_size=CanvasSize(128, 192),
+        background_image=background,
+        logo_image=logo,
+        logo_mask=mask,
+        settings=RenderSettings(
+            background_mode="image_with_overlay",
+            background_color="#000000",
+            overlay_opacity=0.25,
+            logo_width_percent=20,
+            invert_logo_mask=False,
+            corner_radius=0,
+        ),
+    )
+    assert rendered.mode == "RGB"
+    assert rendered.size == (128, 192)
     print("HLT Comfy runtime validation OK")
     return 0
 

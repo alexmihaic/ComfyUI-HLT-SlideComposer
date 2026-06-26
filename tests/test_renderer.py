@@ -142,6 +142,41 @@ def test_renderer_warns_when_label_is_truncated() -> None:
     assert any("[HLT Slide Composer] La etiqueta 1 ha sido truncada." in str(item.message) for item in caught)
 
 
+def test_renderer_combines_background_overlay_logo_title_and_three_images() -> None:
+    background = Image.new("RGB", (80, 120), (120, 120, 120))
+    logo = Image.new("RGBA", (100, 50), (255, 0, 0, 0))
+    for x in range(20, 80):
+        for y in range(10, 40):
+            logo.putpixel((x, y), (255, 0, 0, 255))
+
+    output = render_vertical_stack(
+        [
+            SlideItem(_solid((255, 0, 0)), "REF0"),
+            SlideItem(_solid((0, 255, 0)), "REF1"),
+            SlideItem(_solid((0, 0, 255)), "RESULT"),
+        ],
+        title="COMPLETA",
+        canvas_size=CanvasSize(420, 720),
+        background_image=background,
+        logo_image=logo,
+        settings=RenderSettings(
+            background_mode="image_with_overlay",
+            background_color="#000000",
+            overlay_opacity=0.5,
+            logo_width_percent=24,
+            logo_max_height_percent=8,
+            corner_radius=0,
+        ),
+    )
+
+    assert output.mode == "RGB"
+    assert output.size == (420, 720)
+    assert output.getpixel((5, 5))[0] < 80
+    assert _has_pixel_matching(output, lambda pixel: pixel[0] > 180 and pixel[1] < 80)
+    assert _has_pixel_matching(output, lambda pixel: pixel[1] > 180 and pixel[0] < 80)
+    assert _has_pixel_matching(output, lambda pixel: pixel[2] > 180 and pixel[0] < 80)
+
+
 def _has_pixel_matching(image: Image.Image, predicate) -> bool:
     for y in range(image.height):
         for x in range(image.width):

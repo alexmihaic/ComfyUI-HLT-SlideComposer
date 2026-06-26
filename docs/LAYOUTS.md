@@ -1,30 +1,33 @@
 # Layouts
 
-Este documento describe los layouts soportados por `HLT Â· Slide Composer`.
+Este documento describe los layouts soportados por `HLT · Slide Composer`.
 
 ## `vertical_stack`
 
-Estado: implementado como motor puro en Fase 3.
+Estado: implementado como motor puro y ampliado en Fase 4.
 
-CaracterÃ­sticas actuales:
+Características actuales:
 
 - una columna;
-- de una a cuatro imÃ¡genes;
-- tÃ­tulo superior opcional;
+- de una a cuatro imágenes;
+- título superior opcional;
 - etiquetas opcionales debajo de cada imagen;
-- las etiquetas vacÃ­as no reservan caja;
-- footer reservado opcional para futuro logo;
-- cÃ¡lculo determinista;
-- rectÃ¡ngulos dentro del lienzo;
-- modo visual de depuraciÃ³n.
+- las etiquetas vacías no reservan caja;
+- footer reservado opcional;
+- footer automático cuando existe logo;
+- logo centrado dentro del footer;
+- cálculo determinista;
+- rectángulos dentro del lienzo;
+- modo visual de depuración.
+
+El layout sigue sin dibujar contenido: solo calcula geometría. El renderer coordina fondo, imágenes, textos y logo.
 
 Limitaciones actuales:
 
-- no dibuja logo;
-- no usa imagen de fondo;
-- no aplica overlay;
+- no usa `grid_2x2`;
+- no usa `auto_social`;
 - no procesa batches;
-- no estÃ¡ integrado en ComfyUI.
+- no está integrado en ComfyUI.
 
 ## Pendientes
 
