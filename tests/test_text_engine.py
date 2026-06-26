@@ -99,7 +99,7 @@ def test_fit_text_truncates_as_last_resort_with_ellipsis() -> None:
 
     assert fitted.was_truncated is True
     assert fitted.lines
-    assert fitted.lines[-1].endswith("â€¦")
+    assert fitted.lines[-1].endswith("…")
     assert fitted.width <= 80
 
 

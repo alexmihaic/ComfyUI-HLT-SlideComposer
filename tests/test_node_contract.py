@@ -7,7 +7,7 @@ import sys
 import types
 from pathlib import Path
 
-from hlt_slide.config import RESOLUTION_PRESETS
+from hlt_slide.config import CanvasSize, RESOLUTION_PRESETS, resolve_canvas_size
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -119,6 +119,23 @@ def test_input_types_define_required_optional_and_defaults() -> None:
     assert required["title_color"][1]["default"] == "#E92124"
     assert required["label_color"][1]["default"] == "#E92124"
     assert required["debug_layout"][1]["default"] is False
+
+
+def test_node_default_canvas_preset_is_visible_clean_and_resolvable() -> None:
+    node_module = importlib.import_module("nodes")
+    inputs = node_module.HLTSlideComposer.INPUT_TYPES()
+    preset_names = inputs["required"]["canvas_preset"][0]
+    default = inputs["required"]["canvas_preset"][1]["default"]
+
+    assert default in preset_names
+    assert default == "9:16 Social · 1080x1920"
+    assert all("\u00c2" not in name for name in preset_names)
+    assert all("\u00c3" not in name for name in preset_names)
+    assert all("\u0100" not in name for name in preset_names)
+
+    resolved = resolve_canvas_size(default)
+    assert resolved.size == CanvasSize(width=1080, height=1920)
+    assert resolved.warnings == ()
 
 
 def test_node_contract_metadata() -> None:

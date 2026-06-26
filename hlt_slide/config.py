@@ -60,15 +60,30 @@ class CanvasResolution:
 
 
 RESOLUTION_PRESETS: tuple[ResolutionPreset, ...] = (
-    ResolutionPreset("9:16 Social Â· 1080x1920", 1080, 1920),
-    ResolutionPreset("9:16 AI Â· 1152x2048", 1152, 2048),
-    ResolutionPreset("9:16 4K Â· 2160x3840", 2160, 3840),
-    ResolutionPreset("4:5 Social Â· 1080x1350", 1080, 1350),
-    ResolutionPreset("3:4 Editorial Â· 1536x2048", 1536, 2048),
-    ResolutionPreset("1:1 Square Â· 1080x1080", 1080, 1080),
+    ResolutionPreset("9:16 Social · 1080x1920", 1080, 1920),
+    ResolutionPreset("9:16 AI · 1152x2048", 1152, 2048),
+    ResolutionPreset("9:16 4K · 2160x3840", 2160, 3840),
+    ResolutionPreset("4:5 Social · 1080x1350", 1080, 1350),
+    ResolutionPreset("3:4 Editorial · 1536x2048", 1536, 2048),
+    ResolutionPreset("1:1 Square · 1080x1080", 1080, 1080),
     ResolutionPreset(CUSTOM_PRESET_NAME, None, None),
     ResolutionPreset(BACKGROUND_SIZE_PRESET_NAME, None, None),
 )
+
+LEGACY_PRESET_ALIASES = {
+    "9:16 Social \u00c2\u00b7 1080x1920": "9:16 Social · 1080x1920",
+    "9:16 AI \u00c2\u00b7 1152x2048": "9:16 AI · 1152x2048",
+    "9:16 4K \u00c2\u00b7 2160x3840": "9:16 4K · 2160x3840",
+    "4:5 Social \u00c2\u00b7 1080x1350": "4:5 Social · 1080x1350",
+    "3:4 Editorial \u00c2\u00b7 1536x2048": "3:4 Editorial · 1536x2048",
+    "1:1 Square \u00c2\u00b7 1080x1080": "1:1 Square · 1080x1080",
+    "9:16 Social \u0100\u00b7 1080x1920": "9:16 Social · 1080x1920",
+    "9:16 AI \u0100\u00b7 1152x2048": "9:16 AI · 1152x2048",
+    "9:16 4K \u0100\u00b7 2160x3840": "9:16 4K · 2160x3840",
+    "4:5 Social \u0100\u00b7 1080x1350": "4:5 Social · 1080x1350",
+    "3:4 Editorial \u0100\u00b7 1536x2048": "3:4 Editorial · 1536x2048",
+    "1:1 Square \u0100\u00b7 1080x1080": "1:1 Square · 1080x1080",
+}
 
 PRESETS_BY_NAME = {preset.name: preset for preset in RESOLUTION_PRESETS}
 
@@ -80,6 +95,7 @@ def resolve_canvas_size(
     custom_height: int = DEFAULT_CANVAS_SIZE[1],
     background_size: CanvasSize | None = None,
 ) -> CanvasResolution:
+    preset_name = LEGACY_PRESET_ALIASES.get(preset_name, preset_name)
     preset = PRESETS_BY_NAME.get(preset_name)
     if preset is None:
         raise InvalidCanvasError(

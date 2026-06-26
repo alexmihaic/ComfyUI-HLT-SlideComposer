@@ -114,10 +114,24 @@ def main() -> int:
     inputs = node_class.INPUT_TYPES()
     assert inputs["required"]["image_1"] == ("IMAGE",)
     assert inputs["optional"]["logo_mask"] == ("MASK",)
+    default_preset = inputs["required"]["canvas_preset"][1]["default"]
+    assert default_preset == "9:16 Social · 1080x1920"
 
     node = node_class()
-    one = node.compose(**kwargs())[0]
-    assert_image_tensor(one, (160, 240))
+    default = node.compose(**kwargs(canvas_preset=default_preset))[0]
+    assert_image_tensor(default, (1080, 1920))
+
+    custom = node.compose(**kwargs())[0]
+    assert_image_tensor(custom, (160, 240))
+
+    background_sized = node.compose(
+        **kwargs(
+            canvas_preset="Background size",
+            background_mode="image",
+            background_image=image((0.2, 0.3, 0.5), size=(80, 120)),
+        )
+    )[0]
+    assert_image_tensor(background_sized, (80, 120))
 
     three = node.compose(
         **kwargs(

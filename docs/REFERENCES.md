@@ -1,5 +1,5 @@
 # Referencias
 
-Este documento reunirÃ¡ referencias tÃ©cnicas, patrones estudiados y notas de licencia.
+Este documento reunirá referencias técnicas, patrones estudiados y notas de licencia.
 
-No se ha copiado cÃ³digo de terceros en Fase 0.
+No se ha copiado código de terceros en Fase 0.

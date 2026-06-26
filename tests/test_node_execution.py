@@ -92,6 +92,26 @@ def test_node_executes_one_image_vertical_stack() -> None:
 
 
 @pytest.mark.torch
+def test_node_executes_with_default_canvas_preset_from_input_types() -> None:
+    node = HLTSlideComposer()
+    inputs = HLTSlideComposer.INPUT_TYPES()
+    default_preset = inputs["required"]["canvas_preset"][1]["default"]
+
+    (output,) = node.compose(
+        **_compose_kwargs(
+            canvas_preset=default_preset,
+            custom_width=320,
+            custom_height=480,
+        )
+    )
+
+    assert tuple(output.shape) == (1, 1920, 1080, 3)
+    assert output.dtype is torch.float32
+    assert float(output.min()) >= 0.0
+    assert float(output.max()) <= 1.0
+
+
+@pytest.mark.torch
 def test_node_executes_grid_and_auto_social_with_optional_images() -> None:
     node = HLTSlideComposer()
 

@@ -162,7 +162,7 @@ def _truncate_text(
 
 
 def _truncate_line(line: str, font: ImageFont.ImageFont, max_width: int) -> str:
-    ellipsis = "â€¦"
+    ellipsis = "…"
     if _measure_line(ellipsis, font)[0] > max_width:
         return ""
     candidate = line

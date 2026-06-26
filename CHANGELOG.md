@@ -39,3 +39,6 @@ Todos los cambios relevantes de este proyecto se documentarán en este archivo.
 - Corrección de imports relativos para el descubrimiento real en ComfyUI.
 - Eliminación del fallback ambiguo al módulo global `nodes`.
 - Nueva validación de carga como paquete mediante `scripts/validate_package_discovery.py`.
+- Corrección de mojibake en los nombres canónicos de presets de resolución.
+- Compatibilidad temporal con aliases antiguos de presets guardados con codificación corrupta.
+- Nueva validación para comprobar que el preset predeterminado expuesto por la interfaz se puede resolver y ejecutar.
