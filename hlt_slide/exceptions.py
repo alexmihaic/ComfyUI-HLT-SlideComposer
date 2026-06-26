@@ -18,5 +18,9 @@ class InvalidCanvasError(HLTSlideError):
     """Raised when canvas geometry or preset values are invalid."""
 
 
+class LayoutOverflowError(HLTSlideError):
+    """Raised when a slide layout cannot fit inside the canvas."""
+
+
 def prefixed_message(message: str) -> str:
     return f"{MESSAGE_PREFIX} {message}"

@@ -93,4 +93,9 @@ def test_torch_creation_reports_actionable_error_when_torch_missing(monkeypatch:
 
 @pytest.mark.torch
 def test_torch_creation_with_real_comfyui_python() -> None:
-    pytest.skip("Run later with ComfyUI Python, where Torch is provided.")
+    torch = pytest.importorskip("torch")
+
+    tensor = torch_from_numpy_image(np.zeros((1, 2, 3, 3), dtype=np.float32))
+
+    assert tuple(tensor.shape) == (1, 2, 3, 3)
+    assert tensor.dtype is torch.float32
