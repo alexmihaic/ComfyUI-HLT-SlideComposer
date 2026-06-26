@@ -8,21 +8,38 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
-from hlt_slide.config import (
-    BACKGROUND_SIZE_PRESET_NAME,
-    CUSTOM_PRESET_NAME,
-    CanvasSize,
-    RESOLUTION_PRESETS,
-)
-from hlt_slide.exceptions import prefixed_message
-from hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
-from hlt_slide.tensor_io import (
-    mask_like_to_pillow,
-    numpy_to_pillow,
-    pillow_to_bhwc_numpy,
-    tensor_like_to_numpy,
-    torch_from_numpy_image,
-)
+if __package__:
+    from .hlt_slide.config import (
+        BACKGROUND_SIZE_PRESET_NAME,
+        CUSTOM_PRESET_NAME,
+        CanvasSize,
+        RESOLUTION_PRESETS,
+    )
+    from .hlt_slide.exceptions import prefixed_message
+    from .hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
+    from .hlt_slide.tensor_io import (
+        mask_like_to_pillow,
+        numpy_to_pillow,
+        pillow_to_bhwc_numpy,
+        tensor_like_to_numpy,
+        torch_from_numpy_image,
+    )
+else:
+    from hlt_slide.config import (
+        BACKGROUND_SIZE_PRESET_NAME,
+        CUSTOM_PRESET_NAME,
+        CanvasSize,
+        RESOLUTION_PRESETS,
+    )
+    from hlt_slide.exceptions import prefixed_message
+    from hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
+    from hlt_slide.tensor_io import (
+        mask_like_to_pillow,
+        numpy_to_pillow,
+        pillow_to_bhwc_numpy,
+        tensor_like_to_numpy,
+        torch_from_numpy_image,
+    )
 
 
 NODE_NAME = "HLTSlideComposer"

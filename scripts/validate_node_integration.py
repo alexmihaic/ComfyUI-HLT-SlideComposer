@@ -7,8 +7,6 @@ from types import ModuleType
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 import torch
 
@@ -112,6 +110,7 @@ def main() -> int:
     assert package.NODE_DISPLAY_NAME_MAPPINGS["HLTSlideComposer"] == "HLT · Slide Composer"
 
     node_class = package.NODE_CLASS_MAPPINGS["HLTSlideComposer"]
+    assert node_class.__module__ == "comfyui_hlt_slide_composer.nodes"
     inputs = node_class.INPUT_TYPES()
     assert inputs["required"]["image_1"] == ("IMAGE",)
     assert inputs["optional"]["logo_mask"] == ("MASK",)

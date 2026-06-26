@@ -81,6 +81,12 @@ La selección de layout vive en `hlt_slide.layouts`. `auto_social` no dibuja: de
 
 La capa `nodes.py` debe seguir siendo fina: no contiene layout, crop, texto ni composición alpha. Solo ordena inputs, convierte tensores, construye `RenderSettings`, llama al renderer y devuelve el tensor final.
 
+## Descubrimiento en ComfyUI
+
+ComfyUI carga cada custom node como paquete a partir del `__init__.py` de la carpeta instalada. Por eso el entrypoint raíz debe resolver el `nodes.py` interno del paquete y no debe caer en un módulo top-level llamado `nodes`, que puede pertenecer al propio ComfyUI.
+
+La carga realista se valida con `scripts/validate_package_discovery.py`. Ese script importa el repositorio mediante `spec_from_file_location(..., submodule_search_locations=[...])`, bloquea el paquete top-level `hlt_slide` y simula un módulo global `nodes` vacío para comprobar que `NODE_CLASS_MAPPINGS["HLTSlideComposer"]` procede de `<paquete_temporal>.nodes`.
+
 ## Orden de composición actual
 
 1. color base;
