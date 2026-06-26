@@ -1,0 +1,57 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Type checker and tooling caches
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Windows and macOS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# ComfyUI local/runtime artifacts
+ComfyUI/
+custom_nodes/
+models/
+input/
+output/
+temp/
+user/
+
+# Generated visual outputs; keep tracked placeholders only
+examples/outputs/*
+!examples/outputs/.gitkeep
