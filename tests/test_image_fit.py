@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import pytest
 from PIL import Image
 
 from hlt_slide.config import Rect
+from hlt_slide.exceptions import HLTSlideError
 from hlt_slide.image_utils import compose_image_in_rect, fit_image_to_box
 
 
@@ -62,6 +64,7 @@ def test_contain_preserves_full_image_and_fills_letterbox_color() -> None:
         _horizontal_stripes(),
         (80, 80),
         fit="contain",
+        contain_fill_mode="cell_color",
         cell_background_color=(10, 20, 30, 255),
     )
 
@@ -70,6 +73,77 @@ def test_contain_preserves_full_image_and_fills_letterbox_color() -> None:
     assert _dominant(output.getpixel((12, 40))) == "red"
     assert _dominant(output.getpixel((40, 40))) == "green"
     assert _dominant(output.getpixel((68, 40))) == "blue"
+
+
+def test_contain_transparent_uses_alpha_for_horizontal_letterbox_bands() -> None:
+    output = fit_image_to_box(
+        _horizontal_stripes(),
+        (80, 80),
+        fit="contain",
+        contain_fill_mode="transparent",
+    )
+
+    assert output.mode == "RGBA"
+    assert output.size == (80, 80)
+    assert output.getpixel((40, 5)) == (0, 0, 0, 0)
+    assert output.getpixel((40, 75)) == (0, 0, 0, 0)
+    assert _dominant(output.getpixel((12, 40))[:3]) == "red"
+    assert output.getpixel((12, 40))[3] == 255
+
+
+def test_contain_transparent_uses_alpha_for_vertical_letterbox_bands() -> None:
+    output = fit_image_to_box(
+        _vertical_stripes(),
+        (80, 80),
+        fit="contain",
+        contain_fill_mode="transparent",
+    )
+
+    assert output.mode == "RGBA"
+    assert output.size == (80, 80)
+    assert output.getpixel((5, 40)) == (0, 0, 0, 0)
+    assert output.getpixel((75, 40)) == (0, 0, 0, 0)
+    assert _dominant(output.getpixel((40, 12))[:3]) == "red"
+    assert _dominant(output.getpixel((40, 40))[:3]) == "green"
+    assert _dominant(output.getpixel((40, 68))[:3]) == "blue"
+
+
+def test_contain_transparent_preserves_internal_png_alpha() -> None:
+    source = Image.new("RGBA", (40, 40), (255, 0, 0, 255))
+    source.putpixel((20, 20), (255, 0, 0, 64))
+
+    output = fit_image_to_box(
+        source,
+        (40, 40),
+        fit="contain",
+        contain_fill_mode="transparent",
+    )
+
+    assert output.mode == "RGBA"
+    assert output.getpixel((20, 20))[3] == 64
+
+
+def test_contain_cell_color_keeps_opaque_legacy_output() -> None:
+    output = fit_image_to_box(
+        _horizontal_stripes(),
+        (80, 80),
+        fit="contain",
+        contain_fill_mode="cell_color",
+        cell_background_color=(1, 2, 3, 255),
+    )
+
+    assert output.mode == "RGB"
+    assert output.getpixel((40, 5)) == (1, 2, 3)
+
+
+def test_unknown_contain_fill_mode_raises_clear_error() -> None:
+    with pytest.raises(HLTSlideError, match="Unsupported contain fill mode"):
+        fit_image_to_box(
+            _horizontal_stripes(),
+            (80, 80),
+            fit="contain",
+            contain_fill_mode="bogus",
+        )
 
 
 def test_stretch_uses_exact_target_size() -> None:

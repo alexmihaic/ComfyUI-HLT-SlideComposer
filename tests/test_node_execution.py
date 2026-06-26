@@ -50,6 +50,7 @@ def _compose_kwargs(**overrides):
         "label_color": "#E92124",
         "cell_background_color": "#111111",
         "image_fit": "cover",
+        "contain_fill_mode": "transparent",
         "crop_anchor": "center",
         "font_path": "",
         "title_font_size": 64,
@@ -109,6 +110,26 @@ def test_node_executes_with_default_canvas_preset_from_input_types() -> None:
     assert output.dtype is torch.float32
     assert float(output.min()) >= 0.0
     assert float(output.max()) <= 1.0
+
+
+@pytest.mark.torch
+def test_node_contain_transparent_preserves_background_in_letterbox_bands() -> None:
+    node = HLTSlideComposer()
+    (output,) = node.compose(
+        **_compose_kwargs(
+            background_mode="image",
+            background_image=_image((0.0, 0.0, 1.0), size=(320, 480)),
+            image_1=_image((1.0, 0.0, 0.0), size=(240, 80)),
+            image_fit="contain",
+            contain_fill_mode="transparent",
+            corner_radius=0,
+            border_width=0,
+        )
+    )
+
+    sample = output[0, 110, 160]
+    assert float(sample[2]) > 0.9
+    assert float(sample[0]) < 0.1
 
 
 @pytest.mark.torch

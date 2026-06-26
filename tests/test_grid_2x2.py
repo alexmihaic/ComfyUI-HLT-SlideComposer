@@ -206,6 +206,35 @@ def test_grid_renderer_supports_background_logo_fit_and_order() -> None:
     assert _has_pixel(output, lambda p: p[2] > 180 and p[0] < 90)
 
 
+def test_grid_renderer_contain_transparent_keeps_background_visible_in_bands() -> None:
+    background = Image.new("RGB", (420, 640), (20, 40, 200))
+    output = render_vertical_stack(
+        [
+            SlideItem(Image.new("RGB", (180, 40), (255, 0, 0))),
+            SlideItem(Image.new("RGB", (180, 40), (0, 255, 0))),
+            SlideItem(Image.new("RGB", (180, 40), (0, 0, 255))),
+            SlideItem(Image.new("RGB", (180, 40), (255, 255, 0))),
+        ],
+        canvas_size=CanvasSize(420, 640),
+        background_image=background,
+        settings=RenderSettings(
+            layout="grid_2x2",
+            background_mode="image",
+            image_fit="contain",
+            contain_fill_mode="transparent",
+            cell_background_color="#111111",
+            corner_radius=0,
+        ),
+    )
+    layout = calculate_grid_2x2(CanvasSize(420, 640), image_count=4)
+    sample = (
+        layout.blocks[0].image_rect.x + (layout.blocks[0].image_rect.width // 2),
+        layout.blocks[0].image_rect.y + 4,
+    )
+
+    assert output.getpixel(sample) == (20, 40, 200)
+
+
 def test_grid_renderer_supports_cover_crop_anchors() -> None:
     source = _striped_vertical()
     layout = calculate_grid_2x2(CanvasSize(320, 320), image_count=1)

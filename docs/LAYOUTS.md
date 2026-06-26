@@ -59,6 +59,15 @@ La decisión se basa en el número real de imágenes activas, por lo que las ent
 
 La capa ComfyUI expone `vertical_stack`, `grid_2x2` y `auto_social` mediante el input `layout`. El renderer puro resuelve el layout efectivo antes de dibujar.
 
+## Relleno de imagen en `contain`
+
+Todos los layouts usan el mismo comportamiento de `contain_fill_mode`:
+
+- `transparent`: valor predeterminado. Las bandas sobrantes de `contain` dejan ver el fondo del slide, incluyendo fondo solido, imagen de fondo y overlay.
+- `cell_color`: conserva el relleno solido con `cell_background_color`.
+
+Este ajuste no cambia la geometria de `vertical_stack`, `grid_2x2` ni `auto_social`; solo afecta a la composicion visual dentro del rectangulo de imagen.
+
 ## Pendientes
 
 Estos layouts siguen sin implementar:

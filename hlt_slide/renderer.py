@@ -41,6 +41,7 @@ class RenderSettings:
     label_color: str = "#E92124"
     border_color: str = "#E92124"
     cell_background_color: str = "#111111"
+    contain_fill_mode: str = "transparent"
     font_path: str | None = None
     title_font_size: int = 64
     label_font_size: int = 34
@@ -110,8 +111,8 @@ def render_vertical_stack(
     )
 
     output = _draw_background(canvas_size, render_settings, background_image)
-    output = _draw_title(output, title, layout, render_settings)
     output = _draw_images(output, active_items, layout, render_settings)
+    output = _draw_title(output, title, layout, render_settings)
     output = _draw_labels(output, active_items, layout, render_settings)
     output = _draw_logo(output, canvas_size, layout, render_settings, logo_image, logo_mask)
     if render_settings.debug_layout:
@@ -270,6 +271,7 @@ def _draw_images(
             block.image_rect,
             fit=settings.image_fit,
             crop_anchor=settings.crop_anchor,
+            contain_fill_mode=settings.contain_fill_mode,
             cell_background_color=parse_color(settings.cell_background_color),
             corner_radius=_scaled(settings.corner_radius, scale),
             border_width=_scaled(settings.border_width, scale),
@@ -299,6 +301,7 @@ def _draw_background(
         background_image,
         (canvas_size.width, canvas_size.height),
         fit=settings.background_fit,
+        contain_fill_mode="cell_color",
         cell_background_color=parse_color(settings.background_color),
     ).convert("RGB")
     opacity = _clamp(settings.background_opacity)

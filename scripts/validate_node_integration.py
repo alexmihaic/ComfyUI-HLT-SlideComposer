@@ -65,6 +65,7 @@ def kwargs(**overrides):
         "label_color": "#E92124",
         "cell_background_color": "#111111",
         "image_fit": "cover",
+        "contain_fill_mode": "transparent",
         "crop_anchor": "center",
         "font_path": "",
         "title_font_size": 32,
@@ -123,6 +124,30 @@ def main() -> int:
 
     custom = node.compose(**kwargs())[0]
     assert_image_tensor(custom, (160, 240))
+
+    transparent_contain = node.compose(
+        **kwargs(
+            image_1=image((1.0, 0.0, 0.0), size=(80, 20)),
+            canvas_preset="Custom",
+            custom_width=160,
+            custom_height=240,
+            title="",
+            label_1="",
+            background_mode="image",
+            background_image=image((0.0, 0.0, 1.0), size=(160, 240)),
+            image_fit="contain",
+            contain_fill_mode="transparent",
+            outer_margin=0,
+            top_margin=0,
+            bottom_margin=0,
+            block_gap=0,
+            image_label_gap=0,
+            inner_padding=0,
+        )
+    )[0]
+    assert_image_tensor(transparent_contain, (160, 240))
+    top_band = transparent_contain[0, 20, 80]
+    assert torch.allclose(top_band, torch.tensor([0.0, 0.0, 1.0])), top_band
 
     background_sized = node.compose(
         **kwargs(

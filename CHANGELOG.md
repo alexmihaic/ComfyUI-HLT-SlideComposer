@@ -33,6 +33,9 @@ Todos los cambios relevantes de este proyecto se documentarán en este archivo.
 - Tests de contrato del nodo y tests de ejecución marcados para Torch.
 - Script `scripts/validate_node_integration.py` para validar la integración sin instalar en `custom_nodes`.
 - Plan de primera prueba manual en `docs/FIRST_TEST_PLAN.md`.
+- Input `contain_fill_mode` con modos `transparent` y `cell_color`.
+- Relleno transparente por defecto para `image_fit="contain"`, dejando visible el fondo real del slide.
+- Script de generación visual `scripts/generate_contain_transparent_outputs.py`.
 
 ### Corregido
 

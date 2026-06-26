@@ -118,6 +118,8 @@ def test_input_types_define_required_optional_and_defaults() -> None:
     assert required["background_color"][1]["default"] == "#000000"
     assert required["title_color"][1]["default"] == "#E92124"
     assert required["label_color"][1]["default"] == "#E92124"
+    assert required["contain_fill_mode"][0] == ("transparent", "cell_color")
+    assert required["contain_fill_mode"][1]["default"] == "transparent"
     assert required["debug_layout"][1]["default"] is False
 
 

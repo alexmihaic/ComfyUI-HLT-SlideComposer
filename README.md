@@ -30,6 +30,7 @@ El nodo evitará tener que construir manualmente un slide con varios nodos de re
 - Logo externo opcional centrado abajo.
 - Layouts `vertical_stack`, `grid_2x2` y `auto_social`.
 - Ajustes de imagen `cover`, `contain` y `stretch`.
+- Modo `contain_fill_mode`: `transparent` deja visible el fondo del slide en las bandas de `contain`; `cell_color` conserva el relleno sólido con `cell_background_color`.
 - Salida ComfyUI `IMAGE` en formato `[B, H, W, C]`, `float32`, rango `0.0-1.0`.
 - Renderer basado en Pillow, probado fuera de ComfyUI.
 
@@ -52,7 +53,7 @@ En el estado actual, `nodes.py` ya existe como capa fina de backend y mantiene l
 
 - `hlt_slide.config`: modelos de geometría y resolución.
 - `hlt_slide.color_utils`: parseo tolerante de colores HEX.
-- `hlt_slide.image_utils`: ajuste de imágenes con `cover`, `contain` y `stretch`.
+- `hlt_slide.image_utils`: ajuste de imágenes con `cover`, `contain`, `stretch` y relleno transparente opcional para `contain`.
 - `hlt_slide.tensor_io`: conversiones Pillow/NumPy y adaptación diferida a Torch.
 - `hlt_slide.font_utils`: búsqueda y cache de fuentes.
 - `hlt_slide.text_engine`: ajuste y dibujo centrado de texto.

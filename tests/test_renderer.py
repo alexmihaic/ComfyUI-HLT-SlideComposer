@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from hlt_slide.config import CanvasSize
 from hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
@@ -19,6 +19,13 @@ def _striped_vertical() -> Image.Image:
         color = (255, 0, 0) if y < 80 else (0, 255, 0) if y < 160 else (0, 0, 255)
         for x in range(80):
             pixels[x, y] = color
+    return image
+
+
+def _two_tone_background(size: tuple[int, int] = (320, 480)) -> Image.Image:
+    image = Image.new("RGB", size, (255, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((size[0] // 2, 0, size[0], size[1]), fill=(0, 0, 255))
     return image
 
 
@@ -75,6 +82,7 @@ def test_renderer_supports_contain_and_border() -> None:
         canvas_size=CanvasSize(320, 480),
         settings=RenderSettings(
             image_fit="contain",
+            contain_fill_mode="cell_color",
             cell_background_color="#111111",
             border_width=4,
             border_color="#E92124",
@@ -84,6 +92,91 @@ def test_renderer_supports_contain_and_border() -> None:
 
     assert output.getpixel((160, 110)) == (17, 17, 17)
     assert _has_pixel_matching(output, lambda pixel: pixel[0] > 200 and pixel[1] < 80)
+
+
+def test_renderer_contain_transparent_keeps_solid_background_visible() -> None:
+    output = render_vertical_stack(
+        [SlideItem(_solid((40, 180, 80), (240, 80)), label="")],
+        canvas_size=CanvasSize(320, 480),
+        settings=RenderSettings(
+            background_color="#AA0000",
+            image_fit="contain",
+            contain_fill_mode="transparent",
+            cell_background_color="#111111",
+            border_width=0,
+            corner_radius=0,
+        ),
+    )
+
+    assert output.mode == "RGB"
+    assert output.getpixel((160, 110)) == (170, 0, 0)
+
+
+def test_renderer_contain_cell_color_uses_cell_background_color() -> None:
+    output = render_vertical_stack(
+        [SlideItem(_solid((40, 180, 80), (240, 80)), label="")],
+        canvas_size=CanvasSize(320, 480),
+        settings=RenderSettings(
+            background_color="#AA0000",
+            image_fit="contain",
+            contain_fill_mode="cell_color",
+            cell_background_color="#111111",
+            border_width=0,
+            corner_radius=0,
+        ),
+    )
+
+    assert output.getpixel((160, 110)) == (17, 17, 17)
+
+
+def test_renderer_contain_transparent_keeps_image_background_and_overlay_visible() -> None:
+    background = _two_tone_background((320, 480))
+    output = render_vertical_stack(
+        [SlideItem(_solid((40, 180, 80), (240, 80)), label="")],
+        canvas_size=CanvasSize(320, 480),
+        background_image=background,
+        settings=RenderSettings(
+            background_mode="image_with_overlay",
+            background_color="#000000",
+            overlay_opacity=0.5,
+            image_fit="contain",
+            contain_fill_mode="transparent",
+            cell_background_color="#111111",
+            border_width=0,
+            corner_radius=0,
+        ),
+    )
+
+    assert output.getpixel((160, 110)) == (0, 0, 127)
+
+
+def test_renderer_contain_transparent_supports_corner_radius_border_logo_and_grid() -> None:
+    logo = Image.new("RGBA", (60, 30), (255, 0, 0, 160))
+    output = render_vertical_stack(
+        [
+            SlideItem(_solid((255, 0, 0), (120, 40))),
+            SlideItem(_solid((0, 255, 0), (120, 40))),
+            SlideItem(_solid((0, 0, 255), (120, 40))),
+            SlideItem(_solid((255, 255, 0), (120, 40))),
+        ],
+        canvas_size=CanvasSize(420, 640),
+        background_image=_two_tone_background((420, 640)),
+        logo_image=logo,
+        settings=RenderSettings(
+            layout="grid_2x2",
+            background_mode="image",
+            image_fit="contain",
+            contain_fill_mode="transparent",
+            cell_background_color="#111111",
+            corner_radius=12,
+            border_width=3,
+            border_color="#E92124",
+        ),
+    )
+
+    assert output.mode == "RGB"
+    assert _has_pixel_matching(output, lambda pixel: pixel[0] > 200 and pixel[1] < 80)
+    assert _has_pixel_matching(output, lambda pixel: pixel[2] > 120 and pixel[0] < 80)
 
 
 def test_renderer_cover_crop_anchor_changes_visible_region() -> None:

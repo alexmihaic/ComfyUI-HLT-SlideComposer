@@ -81,6 +81,17 @@ La selección de layout vive en `hlt_slide.layouts`. `auto_social` no dibuja: de
 
 La capa `nodes.py` debe seguir siendo fina: no contiene layout, crop, texto ni composición alpha. Solo ordena inputs, convierte tensores, construye `RenderSettings`, llama al renderer y devuelve el tensor final.
 
+## Relleno de `contain`
+
+`image_fit="contain"` soporta dos modos mediante `contain_fill_mode`:
+
+- `transparent`: modo predeterminado. La imagen conserva su proporcion y las bandas sobrantes se mantienen transparentes para que se vea el fondo real ya compuesto del slide, sea solido, imagen u overlay.
+- `cell_color`: modo de compatibilidad. Las bandas sobrantes se rellenan con `cell_background_color`.
+
+`cell_background_color` solo afecta a imagenes de contenido cuando `image_fit="contain"` y `contain_fill_mode="cell_color"`. No participa en `cover` ni `stretch`.
+
+La composicion usa capas RGBA para evitar multiplicar dos veces el alpha interno de PNGs y la salida final del renderer sigue siendo RGB.
+
 ## Descubrimiento en ComfyUI
 
 ComfyUI carga cada custom node como paquete a partir del `__init__.py` de la carpeta instalada. Por eso el entrypoint raíz debe resolver el `nodes.py` interno del paquete y no debe caer en un módulo top-level llamado `nodes`, que puede pertenecer al propio ComfyUI.
