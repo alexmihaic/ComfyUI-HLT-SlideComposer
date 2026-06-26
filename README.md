@@ -12,8 +12,9 @@ Este repositorio tiene completadas estas fases del motor puro:
 - Fase 2: resolución de fuentes, ajuste de texto y dibujo centrado.
 - Fase 3: layout `vertical_stack` y renderer Pillow con fondo sólido.
 - Fase 4: fondo de imagen, overlay, logo, máscara y composición alpha.
+- Fase 5: layout `grid_2x2`, selector `auto_social` y renderer puro multi-layout.
 
-Todavía no está listo para instalarse ni usarse dentro de ComfyUI. No existe aún `nodes.py`, `grid_2x2`, `auto_social` ni workflow de ComfyUI.
+Todavía no está listo para instalarse ni usarse dentro de ComfyUI. No existe aún `nodes.py` ni workflow de ComfyUI.
 
 ## Problema que resolverá
 
@@ -53,9 +54,9 @@ En fases posteriores, `nodes.py` será solo la capa de adaptación a ComfyUI: de
 - `hlt_slide.tensor_io`: conversiones Pillow/NumPy y adaptación diferida a Torch.
 - `hlt_slide.font_utils`: búsqueda y cache de fuentes.
 - `hlt_slide.text_engine`: ajuste y dibujo centrado de texto.
-- `hlt_slide.layouts`: geometría pura de `vertical_stack`.
+- `hlt_slide.layouts`: geometría pura de `vertical_stack`, `grid_2x2` y `auto_social`.
 - `hlt_slide.logo_utils`: escalado, máscara y composición del logo.
-- `hlt_slide.renderer`: renderer Pillow puro con fondo, contenido y logo.
+- `hlt_slide.renderer`: renderer Pillow puro con fondo, contenido, logo y selección de layout.
 
 ## Preparar entorno de desarrollo
 
@@ -88,6 +89,8 @@ Pruebas por área ya disponibles:
 .\.venv\Scripts\python.exe -m pytest tests/test_renderer.py -q
 .\.venv\Scripts\python.exe -m pytest tests/test_background.py -q
 .\.venv\Scripts\python.exe -m pytest tests/test_logo_mask.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_grid_2x2.py -q
+.\.venv\Scripts\python.exe -m pytest tests/test_auto_social.py -q
 ```
 
 ## Validación con Python de ComfyUI

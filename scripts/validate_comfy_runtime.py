@@ -58,6 +58,51 @@ def main() -> int:
     )
     assert rendered.mode == "RGB"
     assert rendered.size == (128, 192)
+
+    grid_items = [
+        SlideItem(Image.new("RGB", (24, 16), (255, 0, 0)), "A"),
+        SlideItem(Image.new("RGB", (16, 24), (0, 255, 0)), "B"),
+        SlideItem(Image.new("RGB", (24, 16), (0, 0, 255)), "C"),
+        SlideItem(Image.new("RGB", (16, 24), (255, 255, 0)), "D"),
+    ]
+    grid = render_vertical_stack(
+        grid_items,
+        title="GRID",
+        canvas_size=CanvasSize(160, 240),
+        background_image=background,
+        logo_image=logo,
+        settings=RenderSettings(
+            layout="grid_2x2",
+            background_mode="image_with_overlay",
+            background_color="#000000",
+            overlay_opacity=0.2,
+            logo_width_percent=20,
+            corner_radius=0,
+        ),
+    )
+    auto = render_vertical_stack(
+        grid_items,
+        title="AUTO",
+        canvas_size=CanvasSize(160, 240),
+        background_image=background,
+        logo_image=logo,
+        settings=RenderSettings(
+            layout="auto_social",
+            background_mode="image_with_overlay",
+            background_color="#000000",
+            overlay_opacity=0.2,
+            logo_width_percent=20,
+            corner_radius=0,
+        ),
+    )
+    assert grid.mode == auto.mode == "RGB"
+    assert grid.size == auto.size == (160, 240)
+    grid_tensor = torch_from_numpy_image(pillow_to_bhwc_numpy(grid))
+    auto_tensor = torch_from_numpy_image(pillow_to_bhwc_numpy(auto))
+    assert tuple(grid_tensor.shape) == (1, 240, 160, 3)
+    assert tuple(auto_tensor.shape) == (1, 240, 160, 3)
+    assert grid_tensor.dtype is torch.float32
+    assert auto_tensor.dtype is torch.float32
     print("HLT Comfy runtime validation OK")
     return 0
 

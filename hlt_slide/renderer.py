@@ -1,4 +1,4 @@
-"""Pure Pillow renderer for vertical stack slides."""
+"""Pure Pillow renderer for slide layouts."""
 
 from __future__ import annotations
 
@@ -11,7 +11,14 @@ from .color_utils import parse_color
 from .config import CanvasSize, Rect, resolve_canvas_size
 from .exceptions import HLTSlideError, prefixed_message
 from .image_utils import compose_image_in_rect, fit_image_to_box
-from .layouts import SlideLayout, VerticalStackMetrics, calculate_vertical_stack
+from .layouts import (
+    GridMetrics,
+    SlideLayout,
+    VerticalStackMetrics,
+    calculate_grid_2x2,
+    calculate_vertical_stack,
+    select_auto_social_layout,
+)
 from .logo_utils import calculate_logo_size, compose_logo, prepare_logo
 from .text_engine import FittedText, draw_text_in_rect, fit_text
 
@@ -55,6 +62,7 @@ class RenderSettings:
     logo_bottom_offset: int = 0
     invert_logo_mask: bool = True
     debug_layout: bool = False
+    layout: str = "vertical_stack"
 
 
 def render_vertical_stack(
@@ -77,28 +85,20 @@ def render_vertical_stack(
     canvas_size = _resolve_canvas_size(canvas_size, render_settings, background_image)
     scale = canvas_size.width / 1080.0
     content_width = canvas_size.width - (2 * _scaled(64, scale))
+    effective_layout = _resolve_layout(render_settings.layout, len(active_items))
     title_fit = _measure_title(title, render_settings, content_width)
     label_fits = _measure_labels(active_items, render_settings, content_width)
     footer_height = _resolved_footer_height(canvas_size, render_settings, logo_image)
     reserve_footer = render_settings.reserve_footer or logo_image is not None
 
-    metrics = VerticalStackMetrics(
-        footer_height=footer_height,
-        outer_margin=64,
-        top_margin=60,
-        bottom_margin=54,
-        title_gap=36,
-        block_gap=30,
-        image_label_gap=14,
-    )
-    layout = calculate_vertical_stack(
+    layout = _calculate_layout(
+        effective_layout,
         canvas_size,
         image_count=len(active_items),
         title_height=title_fit.height if title_fit is not None else 0,
         label_heights=tuple(label.height if label is not None else 0 for label in label_fits),
         reserve_footer=reserve_footer,
         footer_height=footer_height,
-        metrics=metrics,
     )
 
     output = _draw_background(canvas_size, render_settings, background_image)
@@ -107,8 +107,57 @@ def render_vertical_stack(
     output = _draw_labels(output, active_items, layout, render_settings)
     output = _draw_logo(output, canvas_size, layout, render_settings, logo_image, logo_mask)
     if render_settings.debug_layout:
-        _draw_debug(output, layout, canvas_size, render_settings, logo_image, logo_mask)
+        _draw_debug(
+            output,
+            layout,
+            canvas_size,
+            render_settings,
+            logo_image,
+            logo_mask,
+            effective_layout=effective_layout,
+        )
     return output.convert("RGB")
+
+
+def _resolve_layout(requested_layout: str, active_image_count: int) -> str:
+    if requested_layout == "auto_social":
+        return select_auto_social_layout(active_image_count)
+    if requested_layout in {"vertical_stack", "grid_2x2"}:
+        return requested_layout
+    raise HLTSlideError(prefixed_message(f"Unsupported layout: {requested_layout!r}."))
+
+
+def _calculate_layout(
+    layout_name: str,
+    canvas_size: CanvasSize,
+    *,
+    image_count: int,
+    title_height: int,
+    label_heights: tuple[int, ...],
+    reserve_footer: bool,
+    footer_height: int,
+) -> SlideLayout:
+    if layout_name == "vertical_stack":
+        return calculate_vertical_stack(
+            canvas_size,
+            image_count=image_count,
+            title_height=title_height,
+            label_heights=label_heights,
+            reserve_footer=reserve_footer,
+            footer_height=footer_height,
+            metrics=VerticalStackMetrics(footer_height=footer_height),
+        )
+    if layout_name == "grid_2x2":
+        return calculate_grid_2x2(
+            canvas_size,
+            image_count=image_count,
+            title_height=title_height,
+            label_heights=label_heights,
+            reserve_footer=reserve_footer,
+            footer_height=footer_height,
+            metrics=GridMetrics(footer_height=footer_height),
+        )
+    raise HLTSlideError(prefixed_message(f"Unsupported layout: {layout_name!r}."))
 
 
 def _resolve_canvas_size(
@@ -318,8 +367,11 @@ def _draw_debug(
     settings: RenderSettings,
     logo_image: Image.Image | None,
     logo_mask: Image.Image | None,
+    *,
+    effective_layout: str,
 ) -> None:
     draw = ImageDraw.Draw(output)
+    draw.text((8, 8), f"LAYOUT: {effective_layout.upper()}", fill=(255, 255, 0))
     if layout.title_rect is not None:
         _debug_rect(draw, layout.title_rect, "TITLE", (255, 255, 0))
     for index, block in enumerate(layout.blocks, start=1):

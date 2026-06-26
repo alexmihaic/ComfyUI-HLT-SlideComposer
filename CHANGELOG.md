@@ -23,3 +23,8 @@ Todos los cambios relevantes de este proyecto se documentarán en este archivo.
 - Logo inferior con alpha interno, máscara externa, inversión de máscara, opacidad y escalado proporcional.
 - Tests unitarios de fondo, logo y máscara.
 - Script de generación visual `scripts/generate_phase4_outputs.py`.
+- Layout `grid_2x2` para una, dos, tres y cuatro imágenes.
+- Selector puro `auto_social` basado en imágenes activas.
+- Integración del renderer con `vertical_stack`, `grid_2x2` y `auto_social`.
+- Tests unitarios de grid y auto social.
+- Script de generación visual `scripts/generate_phase5_outputs.py`.

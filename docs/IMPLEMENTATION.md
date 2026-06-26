@@ -47,7 +47,17 @@ Fase 4 amplió el renderer puro:
 - footer automático cuando existe logo;
 - debug de footer y caja final del logo.
 
-No existe todavía `grid_2x2`, `auto_social`, `nodes.py` ni integración con ComfyUI.
+Fase 5 completó el motor puro de layouts:
+
+- `grid_2x2` para una, dos, tres y cuatro imágenes;
+- primera imagen a ancho completo en el caso de tres imágenes;
+- filas y columnas alineadas con etiquetas por fila;
+- selección determinista `auto_social`;
+- integración del renderer con `vertical_stack`, `grid_2x2` y `auto_social`;
+- debug con indicación del layout efectivo;
+- outputs visuales sintéticos de revisión.
+
+No existe todavía `nodes.py` ni integración con ComfyUI.
 
 ## Principio de arquitectura
 
@@ -56,6 +66,8 @@ El paquete `hlt_slide` debe permanecer desacoplado de ComfyUI. La integración f
 `tensor_io.py` no importa Torch al cargar el paquete. La importación de Torch queda diferida a la función que crea el tensor final, para permitir ejecutar tests fuera de ComfyUI.
 
 La lógica de logo vive en `hlt_slide.logo_utils` porque combina escalado proporcional, máscaras e interpolación alpha. El renderer solo coordina el footer y el orden de composición.
+
+La selección de layout vive en `hlt_slide.layouts`. `auto_social` no dibuja: decide de forma determinista entre `vertical_stack` y `grid_2x2` según el número real de imágenes activas.
 
 ## Orden de composición actual
 
