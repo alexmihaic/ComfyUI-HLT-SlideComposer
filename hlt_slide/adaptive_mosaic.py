@@ -141,16 +141,27 @@ def select_adaptive_mosaic(
     sources: Sequence[SourceImageInfo],
     settings: AdaptiveMosaicSettings | None = None,
     *,
+    content_rect: Rect | None = None,
+    title_rect: Rect | None = None,
+    footer_rect: Rect | None = None,
     label_heights: Sequence[int] = (),
 ) -> tuple[SlideLayout, MosaicCandidate]:
     mosaic_settings = settings or AdaptiveMosaicSettings()
     candidates = generate_mosaic_candidates(
-        canvas_size, sources, mosaic_settings, label_heights=label_heights
+        canvas_size,
+        sources,
+        mosaic_settings,
+        content_rect=content_rect,
+        footer_rect=footer_rect,
+        label_heights=label_heights,
     )
     if not candidates:
         raise ValueError("adaptive_mosaic requires at least one valid candidate.")
     winner = max(candidates, key=lambda candidate: (candidate.score, -_template_rank(candidate)))
-    return _slide_from_candidate(canvas_size, winner, mosaic_settings), winner
+    return (
+        _slide_from_candidate(canvas_size, winner, mosaic_settings, title_rect, footer_rect),
+        winner,
+    )
 
 
 def generate_mosaic_candidates(
@@ -158,12 +169,16 @@ def generate_mosaic_candidates(
     sources: Sequence[SourceImageInfo],
     settings: AdaptiveMosaicSettings | None = None,
     *,
+    content_rect: Rect | None = None,
+    footer_rect: Rect | None = None,
     label_heights: Sequence[int] = (),
 ) -> tuple[MosaicCandidate, ...]:
     mosaic_settings = settings or AdaptiveMosaicSettings()
     source_tuple = _validate_sources(sources)
     labels = _resolved_label_heights(source_tuple, label_heights, mosaic_settings)
-    content_rect, footer_rect = _content_and_footer_rect(canvas_size, mosaic_settings)
+    content_rect, footer_rect = _resolved_content_and_footer_rect(
+        canvas_size, mosaic_settings, content_rect, footer_rect
+    )
     candidates: list[MosaicCandidate] = []
     for template in _templates_for_count(len(source_tuple), mosaic_settings):
         blocks = _blocks_for_template(
@@ -558,13 +573,35 @@ def _content_and_footer_rect(
     return Rect(0, 0, canvas_size.width, max(0, content_height)), footer
 
 
+def _resolved_content_and_footer_rect(
+    canvas_size: CanvasSize,
+    settings: AdaptiveMosaicSettings,
+    content_rect: Rect | None,
+    footer_rect: Rect | None,
+) -> tuple[Rect, Rect | None]:
+    if content_rect is None:
+        return _content_and_footer_rect(canvas_size, settings)
+    if content_rect.width < 1 or content_rect.height < 1:
+        raise ValueError("content_rect must have positive dimensions.")
+    canvas_rect = Rect(0, 0, canvas_size.width, canvas_size.height)
+    if not _contains(canvas_rect, content_rect):
+        raise ValueError("content_rect must be inside the canvas.")
+    if footer_rect is not None and not _contains(canvas_rect, footer_rect):
+        raise ValueError("footer_rect must be inside the canvas.")
+    return content_rect, footer_rect
+
+
 def _slide_from_candidate(
     canvas_size: CanvasSize,
     candidate: MosaicCandidate,
     settings: AdaptiveMosaicSettings,
+    title_rect: Rect | None = None,
+    footer_rect: Rect | None = None,
 ) -> SlideLayout:
     _content, footer = _content_and_footer_rect(canvas_size, settings)
-    return SlideLayout(title_rect=None, blocks=candidate.blocks, footer_rect=footer)
+    if footer_rect is not None:
+        footer = footer_rect
+    return SlideLayout(title_rect=title_rect, blocks=candidate.blocks, footer_rect=footer)
 
 
 def _justified_row_height(
@@ -715,14 +752,12 @@ def _label_overflow_penalty(
             if block.label_rect.y < block.image_rect.bottom:
                 penalty += LABEL_OVERFLOW_PENALTY
             rects.append(block.label_rect)
-    if footer_rect is not None:
-        rects.append(footer_rect)
     for rect in rects:
         if rect.x < content_rect.x or rect.y < content_rect.y:
             penalty += LABEL_OVERFLOW_PENALTY
-        if rect.right > content_rect.right and footer_rect != rect:
+        if rect.right > content_rect.right:
             penalty += LABEL_OVERFLOW_PENALTY
-        if rect.bottom > content_rect.bottom and footer_rect != rect:
+        if rect.bottom > content_rect.bottom:
             penalty += LABEL_OVERFLOW_PENALTY
     for left_index, left in enumerate(rects):
         for right in rects[left_index + 1 :]:
@@ -764,6 +799,15 @@ def _edge_misalignment_penalty(candidate: MosaicCandidate, content_rect: Rect) -
 
 def _intersects(left: Rect, right: Rect) -> bool:
     return left.x < right.right and right.x < left.right and left.y < right.bottom and right.y < left.bottom
+
+
+def _contains(outer: Rect, inner: Rect) -> bool:
+    return (
+        inner.x >= outer.x
+        and inner.y >= outer.y
+        and inner.right <= outer.right
+        and inner.bottom <= outer.bottom
+    )
 
 
 def _diagnostics(
