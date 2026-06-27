@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest an improvement or a new layout for HLT Slide Composer
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the creative or workflow problem first, then the proposed solution.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to create, and what is difficult with the current node?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired layout, control, or output.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Layouts
+        - Image fitting and cropping
+        - Text and labels
+        - Background and overlay
+        - Logo and mask
+        - Workflow compatibility
+        - Performance or batches
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Visual references or examples
+      description: Attach sketches or screenshots when useful. Only share assets you are allowed to publish.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked the README roadmap and existing issues first.
+          required: true
+        - label: This request describes a concrete use case rather than only a visual preference.
+          required: true
