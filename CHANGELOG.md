@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+### Added
+
+- Experimental pure geometry engine for future `adaptive_mosaic` layouts.
+
 ## 0.1.0 - 2026-06-27
 
 ### Added
