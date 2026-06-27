@@ -6,6 +6,9 @@ This checklist is for making the repository public and publishing `v0.1.0`.
 
 - [ ] Confirm `docs/RELEASE_CHECKLIST.md` is complete.
 - [ ] Confirm no private screenshots or workflow JSON files are tracked.
+- [ ] Confirm tracked screenshots and PNGs are publication-safe.
+- [ ] Confirm workflow JSON files contain no absolute paths or secrets.
+- [ ] Confirm resource licensing is acceptable for every tracked visual asset.
 - [ ] Confirm `README.md` uses generic install paths only.
 - [ ] Confirm license is present.
 - [ ] Confirm `origin/main` contains the release preparation commit.
@@ -29,14 +32,34 @@ git tag -a v0.1.0 -m "v0.1.0"
 git push origin v0.1.0
 ```
 
-## Create GitHub Release
+## Create GitHub Prerelease
 
 1. Open GitHub Releases.
 2. Draft a new release from tag `v0.1.0`.
 3. Title: `HLT Slide Composer v0.1.0`.
 4. Paste the release notes below.
 5. Attach no private local files.
-6. Publish the release.
+6. Mark it as a prerelease for the first public alpha.
+7. Publish the prerelease.
+
+## Public Clone Verification
+
+```powershell
+cd "TEMP_TEST_DIRECTORY"
+git clone https://github.com/alexmihaic/ComfyUI-HLT-SlideComposer.git
+cd ComfyUI-HLT-SlideComposer
+git checkout v0.1.0
+```
+
+Verify README links and workflow files are present in the public clone.
+
+## External Testers
+
+- [ ] Send the public repository URL to 2-3 testers.
+- [ ] Ask each tester to install with `git clone`.
+- [ ] Ask each tester to load the example workflow and replace image inputs.
+- [ ] Collect issues and screenshots.
+- [ ] Triage fixes for `v0.1.1`.
 
 ## ComfyUI Registry
 
@@ -73,7 +96,8 @@ Initial public alpha release of `HLT · Slide Composer`, a ComfyUI custom node f
 - No JavaScript UI extension.
 - No OpenCV.
 - No video output.
-- Workflow JSON examples and final UI screenshots should be added after clean manual QA.
+- Example workflow uses local image filenames; users must select their own files.
+- UI screenshots should be reviewed before wider announcement.
 ```
 
 ## Rollback
@@ -81,3 +105,4 @@ Initial public alpha release of `HLT · Slide Composer`, a ComfyUI custom node f
 - Remove or rename `ComfyUI-HLT-SlideComposer` from `ComfyUI/custom_nodes`.
 - Restart ComfyUI.
 - If the GitHub Release has a blocking issue, mark it as pre-release or remove it and publish a corrected patch release.
+- Use `v0.1.1` for post-publication fixes instead of rewriting `v0.1.0` after testers have pulled it.

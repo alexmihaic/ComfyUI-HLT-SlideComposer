@@ -9,12 +9,16 @@ Use this checklist before creating the `v0.1.0` tag and GitHub Release.
 - [ ] Run `git diff --check`.
 - [ ] Run `PATH_TO_COMFYUI\python_embeded\python.exe scripts\validate_package_discovery.py`.
 - [ ] Run `PATH_TO_COMFYUI\python_embeded\python.exe scripts\validate_node_integration.py`.
+- [ ] Validate all PNG assets can be opened.
+- [ ] Validate all workflow JSON files parse successfully.
+- [ ] Validate README relative links resolve.
 
 ## Clean Install QA
 
 - [ ] Clone into a clean `ComfyUI/custom_nodes` folder.
 - [ ] Restart ComfyUI.
 - [ ] Confirm the node appears as `HLT · Slide Composer`.
+- [ ] Confirm the node is under `HLT / Composition`.
 - [ ] Create a one-image `vertical_stack` slide.
 - [ ] Create a three-image `vertical_stack` slide.
 - [ ] Create a four-image `grid_2x2` slide.
@@ -26,12 +30,11 @@ Use this checklist before creating the `v0.1.0` tag and GitHub Release.
 
 ## Workflow QA
 
-- [ ] Export `examples/workflows/hlt_slide_composer_grid_4_images.json` from ComfyUI.
-- [ ] Export `examples/workflows/hlt_slide_composer_vertical_3_images.json` from ComfyUI.
-- [ ] Reopen both workflows from disk.
-- [ ] Queue both workflows successfully.
+- [ ] Reopen `examples/workflows/hlt-slide-composer-grid-4-images.json` from disk.
+- [ ] Queue the workflow successfully.
 - [ ] Confirm no disconnected optional inputs leave visual gaps.
-- [ ] Inspect JSON files for private absolute paths or local-only assets.
+- [ ] Confirm the workflow uses four content images, a background image, logo image, logo mask, `HLTSlideComposer`, and `PreviewImage`.
+- [ ] Inspect JSON files for private absolute paths or sensitive data.
 
 ## Screenshot QA
 
@@ -52,6 +55,7 @@ Use this checklist before creating the `v0.1.0` tag and GitHub Release.
 - [ ] Confirm `pyproject.toml` version is `0.1.0`.
 - [ ] Confirm `hlt_slide/__init__.py` version is `0.1.0`.
 - [ ] Confirm `CHANGELOG.md` has `## 0.1.0 - 2026-06-27`.
+- [ ] Confirm README links to the real workflow JSON.
 - [ ] Confirm `main` is pushed.
 - [ ] Create tag: `git tag -a v0.1.0 -m "v0.1.0"`.
 - [ ] Push tag: `git push origin v0.1.0`.

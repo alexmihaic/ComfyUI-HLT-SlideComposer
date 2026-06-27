@@ -1,0 +1,502 @@
+{
+  "id": "344dd554-67d7-413a-a46b-c86d9768957c",
+  "revision": 0,
+  "last_node_id": 17,
+  "last_link_id": 33,
+  "nodes": [
+    {
+      "id": 10,
+      "type": "HLTSlideComposer",
+      "pos": [
+        5380,
+        1750
+      ],
+      "size": [
+        400,
+        1510
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": 30
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 31
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 32
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 33
+        },
+        {
+          "name": "background_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 27
+        },
+        {
+          "name": "logo_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 28
+        },
+        {
+          "name": "logo_mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "name": "slide",
+          "type": "IMAGE",
+          "links": [
+            26
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "alexmihaic/ComfyUI-HLT-SlideComposer",
+        "ver": "b848dd0bb4b168fc0c9b5bfffa0bd1a8eb1cc3b3",
+        "Node name for S&R": "HLTSlideComposer"
+      },
+      "widgets_values": [
+        "9:16 AI · 1152x2048",
+        1,
+        1,
+        "auto_social",
+        "image",
+        "#000000",
+        "cover",
+        1,
+        0,
+        "TEXTO",
+        "TEXTO",
+        "TEXTO",
+        "TEXTO",
+        "TEXTO",
+        "#E92124",
+        "#E92124",
+        "#111111",
+        "cover",
+        "transparent",
+        "center",
+        "",
+        64,
+        34,
+        18,
+        2,
+        8,
+        64,
+        60,
+        54,
+        36,
+        30,
+        14,
+        30,
+        18,
+        0,
+        "#E92124",
+        18,
+        8,
+        1,
+        0,
+        true,
+        true,
+        false,
+        false,
+        6,
+        10,
+        20,
+        32,
+        "center",
+        true,
+        [
+          false,
+          true
+        ],
+        [
+          false,
+          true
+        ],
+        [
+          false,
+          true
+        ],
+        [
+          false,
+          true
+        ],
+        [
+          false,
+          true
+        ]
+      ]
+    },
+    {
+      "id": 11,
+      "type": "PreviewImage",
+      "pos": [
+        5870,
+        1860
+      ],
+      "size": [
+        730,
+        1220
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "label": "image_urls",
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "LoadImage",
+      "pos": [
+        4630,
+        2580
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            27
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "fondo_HLT.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "LoadImage",
+      "pos": [
+        4990,
+        2590
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            28
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            29
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "logo_HLT.png",
+        "image"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "LoadImage",
+      "pos": [
+        4980,
+        1790
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            31
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "0_00736_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "LoadImage",
+      "pos": [
+        4630,
+        2170
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            32
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "0_00737_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "LoadImage",
+      "pos": [
+        4620,
+        1790
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            30
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "vase.png",
+        "image"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "LoadImage",
+      "pos": [
+        4980,
+        2170
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            33
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.26.1",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "man.png",
+        "image"
+      ]
+    }
+  ],
+  "links": [
+    [
+      26,
+      10,
+      0,
+      11,
+      0,
+      "IMAGE"
+    ],
+    [
+      27,
+      12,
+      0,
+      10,
+      4,
+      "IMAGE"
+    ],
+    [
+      28,
+      13,
+      0,
+      10,
+      5,
+      "IMAGE"
+    ],
+    [
+      29,
+      13,
+      1,
+      10,
+      6,
+      "MASK"
+    ],
+    [
+      30,
+      14,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      31,
+      15,
+      0,
+      10,
+      1,
+      "IMAGE"
+    ],
+    [
+      32,
+      16,
+      0,
+      10,
+      2,
+      "IMAGE"
+    ],
+    [
+      33,
+      17,
+      0,
+      10,
+      3,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "frontendVersion": "1.45.19",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

@@ -1,60 +1,83 @@
-# HLT Slide Composer for ComfyUI
+# HLT Slide Composer
 
-`HLT · Slide Composer` is a ComfyUI custom node for composing one to four images into an editorial slide with a title, per-image labels, optional background image, and optional bottom logo.
+HLT Slide Composer is a ComfyUI custom node for composing 1-4 images into editorial slides with titles, labels, backgrounds, overlays and logos.
 
-It is built for quick social/story layouts, visual comparisons, generation results, process documentation, and compact presentation slides.
-
-> Breve descripcion en espanol: un nodo de ComfyUI para crear slides editoriales verticales con imagenes, titulo, etiquetas, fondo y logo.
+> Espanol: un nodo para montar slides editoriales directamente dentro de ComfyUI.
 
 ![HLT Slide Composer hero](docs/assets/readme/hero.png)
 
+## Overview
+
+`HLT · Slide Composer` creates a single finished slide from connected ComfyUI images. It is intended for social stories, visual comparisons, generation reviews, reference sheets, process slides and quick presentation frames.
+
+The node appears under:
+
+```text
+HLT / Composition
+```
+
+Current prepared release: `v0.1.0`.
+
+It outputs a standard ComfyUI `IMAGE` tensor.
+
 ## Screenshots
+
+### Workflow overview
+
+![Workflow overview](docs/assets/readme/workflow-overview.png)
+
+### Grid result
 
 ![Grid example](docs/assets/readme/grid-example.png)
 
-![Vertical example](docs/assets/readme/vertical-example.png)
+### Vertical result
 
-ComfyUI interface screenshots are intentionally not included until the final manual QA pass captures them from a clean installation. See `docs/assets/readme/README.md` for the exact expected files.
+![Vertical example](docs/assets/readme/vertical-example.png)
 
 ## Features
 
-- Composes 1 to 4 connected images.
-- Outputs a valid ComfyUI `IMAGE` tensor: `[1, H, W, 3]`, `float32`, range `0.0-1.0`.
-- Main preset: `9:16 Social · 1080x1920`.
-- Additional presets: `9:16 AI`, `9:16 4K`, `4:5`, `3:4`, `1:1`, `Custom`, and `Background size`.
-- Layouts: `vertical_stack`, `grid_2x2`, and `auto_social`.
-- Image fitting: `cover`, `contain`, and `stretch`.
-- Transparent `contain` bands by default, so the slide background remains visible.
-- Optional title and per-image labels.
-- Label padding, minimum height, vertical alignment, after-gap, and clipping controls.
-- Solid background, image background, and image background with overlay.
-- Optional bottom logo with mask support, opacity, proportional scaling, and centering.
-- Debug layout overlay for checking rectangles.
-- No JavaScript, OpenCV, GUI framework, or bundled proprietary assets.
+- 1-4 content images.
+- `vertical_stack` layout.
+- `grid_2x2` layout.
+- `auto_social` layout selector.
+- 9:16, 4:5, 3:4, square and custom canvas sizes.
+- Solid or image background.
+- Overlay opacity.
+- Title and individual labels.
+- External logo with alpha or mask.
+- `cover`, `contain` and `stretch` image fitting.
+- Transparent bands for `contain`.
+- Label padding.
+- Label spacing.
+- Vertical label alignment.
+- Label clipping.
+- Standard ComfyUI `IMAGE` output: `[1, H, W, 3]`, `float32`, range `0.0-1.0`.
+- Pure Pillow renderer, kept separate from the ComfyUI adapter.
 
 ## Installation
 
-Manual installation with `git clone`:
+Manual installation:
 
 ```powershell
 cd "PATH_TO_COMFYUI\ComfyUI\custom_nodes"
 git clone https://github.com/alexmihaic/ComfyUI-HLT-SlideComposer.git
 ```
 
-Restart ComfyUI, then search for:
+Then:
 
-```text
-HLT · Slide Composer
-```
+1. restart ComfyUI;
+2. search for `HLT · Slide Composer`;
+3. find it under `HLT / Composition`.
 
-Runtime dependencies are intentionally small:
+### Dependencies
 
-```text
-Pillow>=10.0.0
-numpy>=1.24.0
-```
+The node uses:
 
-Torch is provided by ComfyUI and is not installed separately by this project.
+- Pillow;
+- NumPy;
+- Torch provided by ComfyUI.
+
+Do not reinstall Torch for this node. If Pillow or NumPy are missing from your ComfyUI environment, install them with that specific ComfyUI Python, not with a global Python installation.
 
 ## Update
 
@@ -67,19 +90,31 @@ Restart ComfyUI after updating.
 
 ## Quick Start
 
-1. Add `HLT · Slide Composer`.
-2. Connect `image_1`.
-3. Optionally connect `image_2`, `image_3`, and `image_4`.
-4. Set `canvas_preset` to `9:16 Social · 1080x1920`.
-5. Choose `vertical_stack`, `grid_2x2`, or `auto_social`.
-6. Add a title and labels if needed.
-7. Optionally connect a background image, logo image, and logo mask.
-8. Connect the output to `Preview Image` or `Save Image`.
-
-Recommended first values:
+Minimal flow:
 
 ```text
-layout = vertical_stack
+Load Image -> image_1
+Load Image -> image_2
+HLT · Slide Composer
+Preview Image
+```
+
+Full example flow:
+
+```text
+4 x Load Image -> image_1, image_2, image_3, image_4
+Load Image -> background_image
+Load Image -> logo_image + logo_mask
+HLT · Slide Composer
+Preview Image
+```
+
+Suggested first settings:
+
+```text
+canvas_preset = 9:16 Social · 1080x1920
+layout = auto_social
+background_mode = solid
 background_color = #000000
 title_color = #E92124
 label_color = #E92124
@@ -87,45 +122,42 @@ image_fit = cover
 crop_anchor = center
 ```
 
-## Layouts
-
-### `vertical_stack`
-
-Single-column layout for 1 to 4 images. Each active image gets its own block. Empty optional image inputs are ignored and do not leave gaps.
-
-Label spacing sequence:
+With four images:
 
 ```text
-image
-image_label_gap
-label_padding_top
-text
-label_padding_bottom
-label_after_gap
-next image
+auto_social -> grid_2x2
 ```
 
-`block_gap` is used between blocks only when the previous block has no label.
+## Example Workflow
 
-### `grid_2x2`
+Example workflow:
 
-Grid layout for 1 to 4 images:
+[examples/workflows/hlt-slide-composer-grid-4-images.json](examples/workflows/hlt-slide-composer-grid-4-images.json)
 
-- 1 image: one full-width cell.
-- 2 images: two equal columns.
-- 3 images: one full-width top cell and two lower columns.
-- 4 images: regular 2 x 2 grid.
+How to use it:
 
-Labels in the same row share the same reserved label height, based on the tallest label in that row.
+1. Install the custom node.
+2. Open ComfyUI.
+3. Drag the JSON file into ComfyUI or load it through the workflow menu.
+4. In each `Load Image` node, select local files from your own machine.
+5. Replace the background and logo if desired.
+6. Queue the workflow.
 
-### `auto_social`
+Notes:
 
-Automatic selector:
+- The workflow uses four content images.
+- It is prepared for `auto_social`, which resolves to `grid_2x2` with four images.
+- Background and logo are replaceable.
+- Logo and mask are optional.
+- The repository does not distribute the original images referenced by the `Load Image` nodes.
 
-- 1 image: `vertical_stack`
-- 2 images: `vertical_stack`
-- 3 images: `vertical_stack`
-- 4 images: `grid_2x2`
+## Available Layouts
+
+| Layout | Use |
+| --- | --- |
+| `vertical_stack` | One column, 1-4 active images, useful for stories and process slides. |
+| `grid_2x2` | Grid behavior for 1-4 images; with four images it creates a regular 2 x 2 slide. |
+| `auto_social` | Uses `vertical_stack` for 1-3 images and `grid_2x2` for 4 images. |
 
 ## Main Controls
 
@@ -133,7 +165,8 @@ Automatic selector:
 - `layout`
 - `background_mode`, `background_color`, `background_fit`, `background_opacity`, `overlay_opacity`
 - `title`, `label_1`, `label_2`, `label_3`, `label_4`
-- `title_color`, `label_color`, `font_path`, font sizes, line spacing
+- `title_color`, `label_color`
+- `font_path`, `title_font_size`, `label_font_size`, `minimum_font_size`, `line_spacing`
 - `image_fit`, `contain_fill_mode`, `crop_anchor`
 - `outer_margin`, `top_margin`, `bottom_margin`, `title_gap`, `block_gap`, `image_label_gap`
 - `label_padding_top`, `label_padding_bottom`, `label_after_gap`, `label_min_height`, `label_vertical_align`, `label_clip`
@@ -141,62 +174,44 @@ Automatic selector:
 - `logo_width_percent`, `logo_max_height_percent`, `logo_opacity`, `logo_bottom_offset`, `invert_logo_mask`
 - `debug_layout`
 
-## Example Workflows
+## Tested Environment
 
-The repository reserves these workflow paths for ComfyUI-exported examples:
+Validated environment:
 
 ```text
-examples/workflows/hlt_slide_composer_grid_4_images.json
-examples/workflows/hlt_slide_composer_vertical_3_images.json
+ComfyUI 0.26.1
+ComfyUI frontend 1.45.19
+Python 3.11.8
+Pillow 10.4.0
+NumPy 1.26.4
+Torch 2.9.1+cu130
+Windows
 ```
 
-They are not committed yet because they must be exported from ComfyUI during manual QA, not invented by hand. See `examples/workflows/README.md` for the exact capture/export instructions.
+Other versions may work, but they have not been verified yet.
 
-## Checked Compatibility
+## Known Limitations
 
-Automated validation has been run on Windows with:
-
-- Python `3.14.2` in the local development virtual environment.
-- ComfyUI embedded Python `3.11.8`.
-- Pillow `10.4.0` in the checked ComfyUI runtime.
-- NumPy `1.26.4` in the checked ComfyUI runtime.
-- Torch `2.9.1+cu130` in the checked ComfyUI runtime.
-
-Validation scripts:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe -m pytest --cov=hlt_slide
-
-$ComfyPython = "PATH_TO_COMFYUI\python_embeded\python.exe"
-& $ComfyPython scripts\validate_package_discovery.py
-& $ComfyPython scripts\validate_node_integration.py
-```
-
-## Limitations in v0.1.0
-
-- Uses only the first frame of each input batch.
-- Does not implement full batch zip/broadcast processing.
-- No JavaScript UI extension.
-- No OpenCV.
-- No drag-and-drop visual editor.
-- No manual per-image positioning.
-- No video output.
-- `background_blur` is not implemented in v0.1.0.
-- Workflow JSON examples still require export from a clean ComfyUI manual QA pass.
-- Public release tag and GitHub Release are prepared but not created in this repository state.
+- Maximum of four images.
+- Only the first frame of each batch is used.
+- No adaptive mosaic yet.
+- No background blur.
+- No custom frontend.
+- Example workflows require local images.
+- External font paths depend on the local machine.
 
 ## Roadmap
 
-Potential future work:
+Planned for `v0.2.0` exploration:
 
-- `comparison` layout.
-- `hero_stack` layout.
-- Adaptive mosaic options such as `adaptive_mosaic`, `justified_rows`, `masonry_columns`, and `hero_mosaic`.
-- Batch processing modes.
-- Shadows and label background options.
-- Style presets.
-- ComfyUI Registry publication after public QA.
+- `adaptive_mosaic`;
+- automatic aspect-ratio preservation;
+- justified rows;
+- hero layouts;
+- automatic template selection;
+- better layout handling for mixed portrait, landscape and square images.
+
+These features are not implemented in `v0.1.0`.
 
 ## Uninstall
 
@@ -227,8 +242,14 @@ Run tests:
 git diff --check
 ```
 
-The pure renderer lives in `hlt_slide/`. The ComfyUI adapter is intentionally kept thin in `nodes.py`.
+Runtime validation with a ComfyUI Python:
+
+```powershell
+$ComfyPython = "PATH_TO_COMFYUI\python_embeded\python.exe"
+& $ComfyPython scripts\validate_package_discovery.py
+& $ComfyPython scripts\validate_node_integration.py
+```
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [LICENSE](LICENSE).

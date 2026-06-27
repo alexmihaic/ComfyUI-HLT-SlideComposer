@@ -23,8 +23,9 @@ All notable changes to this project are documented in this file.
 - Debug layout overlay for visual inspection.
 - Automated tests for config, colors, image fitting, tensor I/O, fonts, text engine, backgrounds, logo masks, layouts, renderer behavior, node contract, and node execution.
 - Validation scripts for package discovery and node integration using a ComfyUI-style package load.
-- Safe synthetic visual outputs for README and label review.
-- Public release documentation, publication checklists, and workflow export instructions.
+- Example workflow exported from ComfyUI.
+- Public README assets, including hero, workflow overview, grid result and vertical result images.
+- Public release documentation and publication checklists.
 
 ### Fixed
 
@@ -37,6 +38,7 @@ All notable changes to this project are documented in this file.
 - Fixed label text placement by compensating full `textbbox` left/top offsets.
 - Added label clipping so label text cannot invade neighboring image or label rectangles.
 - Added row-level label height reservation in `grid_2x2`.
+- Removed duplicate public image assets and provisional workflow placeholders from the release tree.
 
 ### Validated
 
