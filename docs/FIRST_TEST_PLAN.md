@@ -1,10 +1,10 @@
-# Plan de primera prueba en ComfyUI
+# Manual QA Plan for ComfyUI
 
-Este flujo se ejecutará después de instalar manualmente el repositorio en `custom_nodes`.
+Use this plan after installing the repository manually in a ComfyUI `custom_nodes` folder.
 
-No es un workflow JSON exportado ni validado todavía dentro de ComfyUI.
+The workflow JSON examples must be exported from ComfyUI after this plan passes.
 
-## Flujo previsto
+## Expected Flow
 
 ```text
 Load Image -> image_1
@@ -17,27 +17,28 @@ Preview Image
 Save Image
 ```
 
-## Valores iniciales recomendados
+## Recommended Initial Values
 
 - `canvas_preset`: `9:16 Social · 1080x1920`
 - `layout`: `vertical_stack`
 - `background_mode`: `solid`
 - `background_color`: `#000000`
-- `title`: `REFERENCIAS Y RESULTADO`
-- `label_1`: `REF0 · PRODUCTO`
-- `label_2`: `REF1 · PERSONA`
-- `label_3`: `RESULTADO`
+- `title`: `REFERENCES AND RESULT`
+- `label_1`: `REF0 · PRODUCT`
+- `label_2`: `REF1 · PERSON`
+- `label_3`: `RESULT`
 - `image_fit`: `cover`
 - `crop_anchor`: `center`
 - `logo_width_percent`: `18`
 - `invert_logo_mask`: `true`
 
-## Comprobaciones
+## Checks
 
-- El nodo aparece como `HLT · Slide Composer`.
-- La salida llega a `Preview Image`.
-- La resolución es `1080 x 1920`.
-- No quedan huecos por imágenes opcionales desconectadas.
-- El logo conserva proporción y queda centrado abajo.
-- La máscara del logo responde a `invert_logo_mask`.
-- La consola no muestra errores del custom node.
+- The node appears as `HLT · Slide Composer`.
+- The output reaches `Preview Image`.
+- The resolution is `1080 x 1920`.
+- Optional disconnected images do not leave gaps.
+- The logo keeps its aspect ratio and is centered at the bottom.
+- The logo mask responds to `invert_logo_mask`.
+- Long labels stay inside their label rectangles.
+- The ComfyUI console shows no custom node startup errors.

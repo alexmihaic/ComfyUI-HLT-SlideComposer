@@ -40,8 +40,8 @@ siguiente imagen
 
 Limitaciones actuales:
 
-- no procesa batches;
-- la integracion backend existe, pero todavia no se ha probado durante el arranque real de ComfyUI.
+- no procesa batches completos; en `0.1.0` usa el primer frame de cada entrada;
+- los workflows JSON de ejemplo deben exportarse desde ComfyUI durante QA manual.
 
 ## `grid_2x2`
 

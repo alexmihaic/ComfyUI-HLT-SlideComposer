@@ -1,47 +1,44 @@
 # Changelog
 
-Todos los cambios relevantes de este proyecto se documentarán en este archivo.
+All notable changes to this project are documented in this file.
 
-## 0.1.0 - En desarrollo
+## 0.1.0 - 2026-06-27
 
-### Añadido
+### Added
 
-- Estructura inicial del repositorio.
-- Configuración base de proyecto y pruebas.
-- Documentación inicial de Fase 0.
-- Motor puro de imagen: geometría, presets, colores, ajuste de imagen y conversiones Pillow/NumPy.
-- Motor puro de texto: fuentes, ajuste, reducción, truncado y dibujo centrado.
-- Tests unitarios para configuración, colores, imagen, tensores, fuentes y texto.
-- Salidas visuales sintéticas de Fase 1 y Fase 2 en `examples/outputs/`.
-- Validación del núcleo con Python 3.11.8 y Torch 2.9.1+cu130 del entorno real de ComfyUI.
-- Layout `vertical_stack` puro y renderer Pillow con fondo sólido.
-- Tests unitarios de geometría vertical y renderer.
-- Script de validación `scripts/validate_comfy_runtime.py`.
-- Script de generación visual `scripts/generate_phase3_outputs.py`.
-- Fondo de imagen con modos `solid`, `image` e `image_with_overlay`.
-- Opacidad de fondo, overlay y preset `Background size`.
-- Logo inferior con alpha interno, máscara externa, inversión de máscara, opacidad y escalado proporcional.
-- Tests unitarios de fondo, logo y máscara.
-- Script de generación visual `scripts/generate_phase4_outputs.py`.
-- Layout `grid_2x2` para una, dos, tres y cuatro imágenes.
-- Selector puro `auto_social` basado en imágenes activas.
-- Integración del renderer con `vertical_stack`, `grid_2x2` y `auto_social`.
-- Tests unitarios de grid y auto social.
-- Script de generación visual `scripts/generate_phase5_outputs.py`.
-- Capa backend de ComfyUI con `HLTSlideComposer`, `nodes.py`, mappings y salida `IMAGE`.
-- Conversión de entradas `IMAGE` y `MASK` para ejecutar el renderer puro desde el nodo.
-- Tests de contrato del nodo y tests de ejecución marcados para Torch.
-- Script `scripts/validate_node_integration.py` para validar la integración sin instalar en `custom_nodes`.
-- Plan de primera prueba manual en `docs/FIRST_TEST_PLAN.md`.
-- Input `contain_fill_mode` con modos `transparent` y `cell_color`.
-- Relleno transparente por defecto para `image_fit="contain"`, dejando visible el fondo real del slide.
-- Script de generación visual `scripts/generate_contain_transparent_outputs.py`.
+- Initial repository structure, MIT license, project metadata, and test setup.
+- Pure Pillow/NumPy image engine with geometry models, canvas presets, color parsing, tensor conversion helpers, image fit modes, crop anchors, rounded corners, and borders.
+- Text engine with font resolution, text fitting, wrapping, truncation, manual line break support, uppercase options, and bbox-aware drawing.
+- `vertical_stack` layout for 1 to 4 active images.
+- `grid_2x2` layout for 1 to 4 active images.
+- `auto_social` selector based on the real number of connected images.
+- Solid backgrounds, image backgrounds, background opacity, overlays, and `Background size` canvas preset.
+- Optional bottom logo with alpha, external mask, mask inversion, opacity, proportional scaling, and centered placement.
+- ComfyUI backend integration with `HLTSlideComposer`, `nodes.py`, root mappings, and `IMAGE` output.
+- `INPUT_TYPES` for images, masks, canvas presets, layout, texts, colors, typography, geometry, image fitting, logo controls, and debug controls.
+- First-frame batch behavior for v0.1.0 with warnings for larger batches.
+- `contain_fill_mode` with `transparent` and `cell_color`.
+- Transparent `contain` bands by default so the composed slide background remains visible.
+- Label controls for top padding, bottom padding, after-gap, minimum height, vertical alignment, and clipping.
+- Debug layout overlay for visual inspection.
+- Automated tests for config, colors, image fitting, tensor I/O, fonts, text engine, backgrounds, logo masks, layouts, renderer behavior, node contract, and node execution.
+- Validation scripts for package discovery and node integration using a ComfyUI-style package load.
+- Safe synthetic visual outputs for README and label review.
+- Public release documentation, publication checklists, and workflow export instructions.
 
-### Corregido
+### Fixed
 
-- Corrección de imports relativos para el descubrimiento real en ComfyUI.
-- Eliminación del fallback ambiguo al módulo global `nodes`.
-- Nueva validación de carga como paquete mediante `scripts/validate_package_discovery.py`.
-- Corrección de mojibake en los nombres canónicos de presets de resolución.
-- Compatibilidad temporal con aliases antiguos de presets guardados con codificación corrupta.
-- Nueva validación para comprobar que el preset predeterminado expuesto por la interfaz se puede resolver y ejecutar.
+- Corrected relative imports so ComfyUI-style package discovery loads the repository node instead of a global `nodes` module.
+- Added realistic package discovery validation for ComfyUI custom node loading.
+- Corrected mojibake in canonical canvas preset names.
+- Preserved compatibility with older saved workflows through legacy preset aliases.
+- Fixed `contain` rendering so transparent bands show the real slide background.
+- Preserved historical widget order by appending new controls at the end.
+- Fixed label text placement by compensating full `textbbox` left/top offsets.
+- Added label clipping so label text cannot invade neighboring image or label rectangles.
+- Added row-level label height reservation in `grid_2x2`.
+
+### Validated
+
+- Local test suite passes with coverage.
+- Package discovery and node integration pass under the checked ComfyUI embedded Python runtime.
