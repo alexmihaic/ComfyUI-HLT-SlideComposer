@@ -76,6 +76,12 @@ def _compose_kwargs(**overrides):
         "uppercase_title": True,
         "uppercase_labels": False,
         "debug_layout": False,
+        "label_padding_top": 6,
+        "label_padding_bottom": 10,
+        "label_after_gap": 20,
+        "label_min_height": 32,
+        "label_vertical_align": "center",
+        "label_clip": True,
     }
     base.update(overrides)
     return base

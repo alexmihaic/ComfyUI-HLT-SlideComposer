@@ -32,10 +32,12 @@ class VerticalStackMetrics:
     title_gap: int = 36
     block_gap: int = 30
     image_label_gap: int = 14
+    label_after_gap: int = 20
     footer_height: int = 0
     min_title_gap: int = 8
     min_block_gap: int = 8
     min_image_label_gap: int = 4
+    min_label_after_gap: int = 0
 
 
 @dataclass(frozen=True)
@@ -47,11 +49,13 @@ class GridMetrics:
     row_gap: int = 30
     column_gap: int = 30
     image_label_gap: int = 14
+    label_after_gap: int = 20
     footer_height: int = 0
     min_title_gap: int = 8
     min_row_gap: int = 8
     min_column_gap: int = 8
     min_image_label_gap: int = 4
+    min_label_after_gap: int = 0
 
 
 def select_auto_social_layout(active_image_count: int) -> str:
@@ -99,6 +103,7 @@ def calculate_vertical_stack(
         title_gap=scaled.title_gap,
         block_gap=scaled.block_gap,
         image_label_gap=scaled.image_label_gap,
+        label_after_gap=scaled.label_after_gap,
     )
     if normal is not None:
         return normal
@@ -116,6 +121,7 @@ def calculate_vertical_stack(
         title_gap=scaled.min_title_gap,
         block_gap=scaled.min_block_gap,
         image_label_gap=scaled.min_image_label_gap,
+        label_after_gap=scaled.min_label_after_gap,
     )
     if reduced is not None:
         return reduced
@@ -130,6 +136,7 @@ def calculate_vertical_stack(
         title_gap=scaled.min_title_gap,
         block_gap=scaled.min_block_gap,
         image_label_gap=scaled.min_image_label_gap,
+        label_after_gap=scaled.min_label_after_gap,
     )
     raise LayoutOverflowError(
         prefixed_message(
@@ -177,6 +184,7 @@ def calculate_grid_2x2(
         row_gap=scaled.row_gap,
         column_gap=scaled.column_gap,
         image_label_gap=scaled.image_label_gap,
+        label_after_gap=scaled.label_after_gap,
     )
     if normal is not None:
         return normal
@@ -195,6 +203,7 @@ def calculate_grid_2x2(
         row_gap=scaled.min_row_gap,
         column_gap=scaled.min_column_gap,
         image_label_gap=scaled.min_image_label_gap,
+        label_after_gap=scaled.min_label_after_gap,
     )
     if reduced is not None:
         return reduced
@@ -210,6 +219,7 @@ def calculate_grid_2x2(
         title_gap=scaled.min_title_gap,
         row_gap=scaled.min_row_gap,
         image_label_gap=scaled.min_image_label_gap,
+        label_after_gap=scaled.min_label_after_gap,
     )
     raise LayoutOverflowError(
         prefixed_message(
@@ -238,10 +248,12 @@ def _scale_metrics(metrics: VerticalStackMetrics, canvas_width: int) -> Vertical
         title_gap=_scaled(metrics.title_gap, scale),
         block_gap=_scaled(metrics.block_gap, scale),
         image_label_gap=_scaled(metrics.image_label_gap, scale),
+        label_after_gap=_scaled(metrics.label_after_gap, scale),
         footer_height=_scaled(metrics.footer_height, scale),
         min_title_gap=_scaled(metrics.min_title_gap, scale),
         min_block_gap=_scaled(metrics.min_block_gap, scale),
         min_image_label_gap=_scaled(metrics.min_image_label_gap, scale),
+        min_label_after_gap=_scaled(metrics.min_label_after_gap, scale),
     )
 
 
@@ -255,11 +267,13 @@ def _scale_grid_metrics(metrics: GridMetrics, canvas_width: int) -> GridMetrics:
         row_gap=_scaled(metrics.row_gap, scale),
         column_gap=_scaled(metrics.column_gap, scale),
         image_label_gap=_scaled(metrics.image_label_gap, scale),
+        label_after_gap=_scaled(metrics.label_after_gap, scale),
         footer_height=_scaled(metrics.footer_height, scale),
         min_title_gap=_scaled(metrics.min_title_gap, scale),
         min_row_gap=_scaled(metrics.min_row_gap, scale),
         min_column_gap=_scaled(metrics.min_column_gap, scale),
         min_image_label_gap=_scaled(metrics.min_image_label_gap, scale),
+        min_label_after_gap=_scaled(metrics.min_label_after_gap, scale),
     )
 
 
@@ -281,13 +295,24 @@ def _try_layout(
     title_gap: int,
     block_gap: int,
     image_label_gap: int,
+    label_after_gap: int,
 ) -> SlideLayout | None:
     content_width = canvas_size.width - (2 * outer_margin)
     if content_width < 1:
         return None
 
     label_count = sum(1 for height in label_heights if height > 0)
-    total_gap = (block_gap * max(0, image_count - 1)) + (image_label_gap * label_count)
+    labeled_followed_count = sum(
+        1 for index, height in enumerate(label_heights[:-1]) if height > 0
+    )
+    unlabeled_followed_count = sum(
+        1 for index, height in enumerate(label_heights[:-1]) if height == 0
+    )
+    total_gap = (
+        (block_gap * unlabeled_followed_count)
+        + (image_label_gap * label_count)
+        + (label_after_gap * labeled_followed_count)
+    )
     if title_height > 0:
         total_gap += title_gap
     footer = footer_height if reserve_footer else 0
@@ -314,7 +339,7 @@ def _try_layout(
             label_rect = Rect(outer_margin, y, content_width, label_height)
             y += label_height
         if index < image_count - 1:
-            y += block_gap
+            y += label_after_gap if label_height > 0 else block_gap
         blocks.append(BlockLayout(image_rect, label_rect))
 
     footer_rect = None
@@ -343,6 +368,7 @@ def _try_grid_layout(
     row_gap: int,
     column_gap: int,
     image_label_gap: int,
+    label_after_gap: int,
 ) -> SlideLayout | None:
     content_width = canvas_size.width - (2 * outer_margin)
     if content_width < 1:
@@ -352,8 +378,14 @@ def _try_grid_layout(
 
     row_label_heights = tuple(max(label_heights[index] for index in row) for row in rows)
     labeled_row_count = sum(1 for height in row_label_heights if height > 0)
+    followed_labeled_row_count = sum(1 for height in row_label_heights[:-1] if height > 0)
+    followed_unlabeled_row_count = sum(1 for height in row_label_heights[:-1] if height == 0)
     footer = footer_height if reserve_footer else 0
-    total_gap = (row_gap * max(0, len(rows) - 1)) + (image_label_gap * labeled_row_count)
+    total_gap = (
+        (row_gap * followed_unlabeled_row_count)
+        + (label_after_gap * followed_labeled_row_count)
+        + (image_label_gap * labeled_row_count)
+    )
     if title_height > 0:
         total_gap += title_gap
     non_image = (
@@ -396,7 +428,7 @@ def _try_grid_layout(
         if row_label_heights[row_index] > 0:
             y += image_label_gap + row_label_heights[row_index]
         if row_index < len(rows) - 1:
-            y += row_gap
+            y += label_after_gap if row_label_heights[row_index] > 0 else row_gap
 
     footer_rect = None
     if reserve_footer and footer > 0:
@@ -449,8 +481,11 @@ def _required_non_image_space(
     title_gap: int,
     block_gap: int,
     image_label_gap: int,
+    label_after_gap: int,
 ) -> int:
     label_count = sum(1 for height in label_heights if height > 0)
+    labeled_followed_count = sum(1 for height in label_heights[:-1] if height > 0)
+    unlabeled_followed_count = sum(1 for height in label_heights[:-1] if height == 0)
     return (
         top_margin
         + bottom_margin
@@ -458,8 +493,9 @@ def _required_non_image_space(
         + title_height
         + sum(label_heights)
         + (title_gap if title_height > 0 else 0)
-        + (block_gap * max(0, len(label_heights) - 1))
+        + (block_gap * unlabeled_followed_count)
         + (image_label_gap * label_count)
+        + (label_after_gap * labeled_followed_count)
     )
 
 
@@ -475,9 +511,12 @@ def _required_grid_non_image_space(
     title_gap: int,
     row_gap: int,
     image_label_gap: int,
+    label_after_gap: int,
 ) -> int:
     row_label_heights = tuple(max(label_heights[index] for index in row) for row in rows)
     labeled_row_count = sum(1 for height in row_label_heights if height > 0)
+    followed_labeled_row_count = sum(1 for height in row_label_heights[:-1] if height > 0)
+    followed_unlabeled_row_count = sum(1 for height in row_label_heights[:-1] if height == 0)
     return (
         top_margin
         + bottom_margin
@@ -485,6 +524,7 @@ def _required_grid_non_image_space(
         + title_height
         + sum(row_label_heights)
         + (title_gap if title_height > 0 else 0)
-        + (row_gap * max(0, len(rows) - 1))
+        + (row_gap * followed_unlabeled_row_count)
         + (image_label_gap * labeled_row_count)
+        + (label_after_gap * followed_labeled_row_count)
     )

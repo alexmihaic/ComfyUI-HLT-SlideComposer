@@ -6,26 +6,42 @@ Este documento describe los layouts soportados por `HLT · Slide Composer`.
 
 Estado: implementado como motor puro y ampliado en Fase 4.
 
-Características actuales:
+Caracteristicas actuales:
 
 - una columna;
-- de una a cuatro imágenes;
-- título superior opcional;
+- de una a cuatro imagenes;
+- titulo superior opcional;
 - etiquetas opcionales debajo de cada imagen;
-- las etiquetas vacías no reservan caja;
+- las etiquetas vacias no reservan caja;
 - footer reservado opcional;
-- footer automático cuando existe logo;
+- footer automatico cuando existe logo;
 - logo centrado dentro del footer;
-- cálculo determinista;
-- rectángulos dentro del lienzo;
-- modo visual de depuración.
+- calculo determinista;
+- rectangulos dentro del lienzo;
+- modo visual de depuracion.
 
-El layout sigue sin dibujar contenido: solo calcula geometría. El renderer coordina fondo, imágenes, textos y logo.
+El layout sigue sin dibujar contenido: solo calcula geometria. El renderer coordina fondo, imagenes, textos y logo.
+
+### Espaciado de etiquetas
+
+La secuencia de cada bloque con etiqueta es:
+
+```text
+imagen
+image_label_gap
+label_padding_top
+texto
+label_padding_bottom
+label_after_gap
+siguiente imagen
+```
+
+`image_label_gap` separa la imagen de su etiqueta. `label_after_gap` separa la zona completa de etiqueta del siguiente bloque. `block_gap` solo se usa entre bloques consecutivos cuando el bloque anterior no tiene etiqueta, para evitar sumar dos separaciones equivalentes.
 
 Limitaciones actuales:
 
 - no procesa batches;
-- la integración backend existe, pero todavía no se ha probado durante el arranque real de ComfyUI.
+- la integracion backend existe, pero todavia no se ha probado durante el arranque real de ComfyUI.
 
 ## `grid_2x2`
 
@@ -33,16 +49,18 @@ Estado: implementado como motor puro en Fase 5.
 
 Comportamiento:
 
-- una imagen: una celda amplia a todo el ancho útil;
-- dos imágenes: dos columnas equivalentes;
-- tres imágenes: primera imagen a todo el ancho útil y segunda fila con dos columnas;
-- cuatro imágenes: cuadrícula regular 2 x 2;
+- una imagen: una celda amplia a todo el ancho util;
+- dos imagenes: dos columnas equivalentes;
+- tres imagenes: primera imagen a todo el ancho util y segunda fila con dos columnas;
+- cuatro imagenes: cuadricula regular 2 x 2;
 - etiquetas debajo de cada imagen;
 - altura de etiquetas alineada por fila;
-- footer manual o automático por logo;
+- footer manual o automatico por logo;
 - fondo, overlay, logo y debug coordinados desde el renderer.
 
-`grid_2x2` calcula únicamente geometría. El ajuste de imágenes sigue reutilizando `compose_image_in_rect` con `cover`, `contain`, `stretch` y crop anchors `top`, `center` y `bottom`.
+`grid_2x2` calcula unicamente geometria. El ajuste de imagenes sigue reutilizando `compose_image_in_rect` con `cover`, `contain`, `stretch` y crop anchors `top`, `center` y `bottom`.
+
+En cada fila, todas las etiquetas comparten la misma altura de zona, calculada a partir de la etiqueta mas alta de esa fila. Si una fila tiene etiquetas, la siguiente fila empieza despues de `label_after_gap`; si la fila no tiene ninguna etiqueta, no se reserva caja de etiqueta ni ese gap posterior.
 
 ## `auto_social`
 
@@ -51,11 +69,11 @@ Estado: implementado como selector puro en Fase 5.
 Reglas actuales:
 
 - 1 imagen -> `vertical_stack`;
-- 2 imágenes -> `vertical_stack`;
-- 3 imágenes -> `vertical_stack`;
-- 4 imágenes -> `grid_2x2`.
+- 2 imagenes -> `vertical_stack`;
+- 3 imagenes -> `vertical_stack`;
+- 4 imagenes -> `grid_2x2`.
 
-La decisión se basa en el número real de imágenes activas, por lo que las entradas opcionales desconectadas no dejan huecos ni alteran el conteo.
+La decision se basa en el numero real de imagenes activas, por lo que las entradas opcionales desconectadas no dejan huecos ni alteran el conteo.
 
 La capa ComfyUI expone `vertical_stack`, `grid_2x2` y `auto_social` mediante el input `layout`. El renderer puro resuelve el layout efectivo antes de dibujar.
 
@@ -67,6 +85,17 @@ Todos los layouts usan el mismo comportamiento de `contain_fill_mode`:
 - `cell_color`: conserva el relleno solido con `cell_background_color`.
 
 Este ajuste no cambia la geometria de `vertical_stack`, `grid_2x2` ni `auto_social`; solo afecta a la composicion visual dentro del rectangulo de imagen.
+
+## Adaptive mosaic roadmap
+
+Esta seccion es una propuesta futura; no anade valores nuevos al input `layout` en la version actual.
+
+- `adaptive_mosaic`: seleccionaria una composicion de mosaico segun cantidad de imagenes, proporcion dominante y espacio disponible.
+- `justified_rows`: distribuiria imagenes en filas justificadas, preservando aspect ratio y ajustando alturas por fila.
+- `masonry_columns`: organizaria imagenes en columnas de altura variable, util para referencias con proporciones mezcladas.
+- `hero_mosaic`: daria prioridad visual a una imagen principal y colocaria las restantes como apoyo.
+- preservacion de aspect ratio: todos estos layouts deberian mantener proporciones salvo eleccion explicita de `stretch`.
+- seleccion automatica de plantilla: `auto_social` podria evolucionar para escoger entre estas plantillas segun numero de imagenes, orientaciones y preset de lienzo.
 
 ## Pendientes
 

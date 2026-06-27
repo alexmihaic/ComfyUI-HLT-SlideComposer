@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -12,6 +13,7 @@ from .font_utils import resolve_font
 
 
 RGBA = tuple[int, int, int, int]
+VerticalAlign = Literal["top", "center", "bottom"]
 _SPACE_RE = re.compile(r"[ \t\r\f\v]+")
 
 
@@ -23,6 +25,22 @@ class FittedText:
     width: int
     height: int
     was_truncated: bool
+
+
+@dataclass(frozen=True)
+class LineInkBounds:
+    left: int
+    top: int
+    right: int
+    bottom: int
+
+    @property
+    def width(self) -> int:
+        return self.right - self.left
+
+    @property
+    def height(self) -> int:
+        return self.bottom - self.top
 
 
 def fit_text(
@@ -67,30 +85,47 @@ def draw_text_in_rect(
     line_spacing: int,
     color: RGBA,
     uppercase: bool = False,
+    vertical_align: VerticalAlign = "center",
+    clip: bool = False,
 ) -> Image.Image:
-    result = image.copy()
+    target_rect = Rect(0, 0, rect.width, rect.height) if clip else rect
+    draw_target = Image.new("RGBA", (rect.width, rect.height), (0, 0, 0, 0)) if clip else image.copy()
     fitted = fit_text(
         text,
         font_path=font_path,
         preferred_size=preferred_size,
         minimum_size=minimum_size,
-        max_width=rect.width,
-        max_height=rect.height,
+        max_width=target_rect.width,
+        max_height=target_rect.height,
         max_lines=max_lines,
         line_spacing=line_spacing,
         uppercase=uppercase,
     )
     if not fitted.lines:
-        return result
+        return image.copy()
 
-    draw = ImageDraw.Draw(result)
-    y = rect.y + (rect.height - fitted.height) / 2
+    draw = ImageDraw.Draw(draw_target)
+    y = _aligned_top(target_rect, fitted.height, vertical_align)
     for line in fitted.lines:
-        line_width, line_height = _measure_line(line, fitted.font)
-        x = rect.x + (rect.width - line_width) / 2
-        draw.text((round(x), round(y)), line, font=fitted.font, fill=color)
-        y += line_height + line_spacing
-    return result
+        bounds = calculate_line_ink_bounds(line, fitted.font)
+        x = target_rect.x + ((target_rect.width - bounds.width) / 2) - bounds.left
+        draw_y = y - bounds.top
+        draw.text((round(x), round(draw_y)), line, font=fitted.font, fill=color)
+        y += bounds.height + line_spacing
+
+    if not clip:
+        return draw_target
+
+    base = image.convert("RGBA")
+    base.alpha_composite(draw_target, (rect.x, rect.y))
+    return base if image.mode == "RGBA" else base.convert(image.mode)
+
+
+def calculate_line_ink_bounds(line: str, font: ImageFont.ImageFont) -> LineInkBounds:
+    probe = Image.new("RGB", (1, 1))
+    draw = ImageDraw.Draw(probe)
+    left, top, right, bottom = draw.textbbox((0, 0), line or " ", font=font)
+    return LineInkBounds(left, top, right, bottom)
 
 
 def _clean_text(text: str, *, uppercase: bool) -> str:
@@ -197,7 +232,13 @@ def _measure_lines(
 
 
 def _measure_line(line: str, font: ImageFont.ImageFont) -> tuple[int, int]:
-    probe = Image.new("RGB", (1, 1))
-    draw = ImageDraw.Draw(probe)
-    bbox = draw.textbbox((0, 0), line or " ", font=font)
-    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+    bounds = calculate_line_ink_bounds(line, font)
+    return bounds.width, bounds.height
+
+
+def _aligned_top(rect: Rect, text_height: int, vertical_align: VerticalAlign) -> float:
+    if vertical_align == "top":
+        return float(rect.y)
+    if vertical_align == "bottom":
+        return float(rect.bottom - text_height)
+    return rect.y + ((rect.height - text_height) / 2)

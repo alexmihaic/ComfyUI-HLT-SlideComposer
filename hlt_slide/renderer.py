@@ -57,6 +57,12 @@ class RenderSettings:
     title_gap: int = 36
     block_gap: int = 30
     image_label_gap: int = 14
+    label_padding_top: int = 6
+    label_padding_bottom: int = 10
+    label_after_gap: int = 20
+    label_min_height: int = 32
+    label_vertical_align: str = "center"
+    label_clip: bool = True
     inner_padding: int = 30
     image_fit: str = "cover"
     crop_anchor: str = "center"
@@ -95,7 +101,8 @@ def render_vertical_stack(
     content_width = canvas_size.width - (2 * _scaled(64, scale))
     effective_layout = _resolve_layout(render_settings.layout, len(active_items))
     title_fit = _measure_title(title, render_settings, content_width)
-    label_fits = _measure_labels(active_items, render_settings, content_width)
+    label_widths = _label_measure_widths(effective_layout, len(active_items), canvas_size, render_settings)
+    label_fits = _measure_labels(active_items, render_settings, label_widths)
     footer_height = _resolved_footer_height(canvas_size, render_settings, logo_image)
     reserve_footer = render_settings.reserve_footer or logo_image is not None
 
@@ -105,7 +112,7 @@ def render_vertical_stack(
         render_settings=render_settings,
         image_count=len(active_items),
         title_height=title_fit.height if title_fit is not None else 0,
-        label_heights=tuple(label.height if label is not None else 0 for label in label_fits),
+        label_heights=tuple(_reserved_label_height(label, render_settings) for label in label_fits),
         reserve_footer=reserve_footer,
         footer_height=footer_height,
     )
@@ -162,6 +169,7 @@ def _calculate_layout(
                 title_gap=render_settings.title_gap,
                 block_gap=render_settings.block_gap,
                 image_label_gap=render_settings.image_label_gap,
+                label_after_gap=render_settings.label_after_gap,
                 footer_height=footer_height,
             ),
         )
@@ -181,6 +189,7 @@ def _calculate_layout(
                 row_gap=render_settings.block_gap,
                 column_gap=render_settings.inner_padding,
                 image_label_gap=render_settings.image_label_gap,
+                label_after_gap=render_settings.label_after_gap,
                 footer_height=footer_height,
             ),
         )
@@ -229,13 +238,14 @@ def _measure_title(
 def _measure_labels(
     items: tuple[SlideItem, ...],
     settings: RenderSettings,
-    max_width: int,
+    max_widths: tuple[int, ...],
 ) -> tuple[FittedText | None, ...]:
     fits: list[FittedText | None] = []
     for index, item in enumerate(items, start=1):
         if not item.label.strip():
             fits.append(None)
             continue
+        max_width = max_widths[index - 1]
         fitted = fit_text(
             item.label,
             font_path=settings.font_path,
@@ -254,6 +264,36 @@ def _measure_labels(
             )
         fits.append(fitted)
     return tuple(fits)
+
+
+def _label_measure_widths(
+    layout_name: str,
+    image_count: int,
+    canvas_size: CanvasSize,
+    settings: RenderSettings,
+) -> tuple[int, ...]:
+    scale = canvas_size.width / 1080.0
+    content_width = canvas_size.width - (2 * _scaled(settings.outer_margin, scale))
+    content_width = max(1, content_width)
+    if layout_name == "vertical_stack" or image_count == 1:
+        return tuple(content_width for _ in range(image_count))
+
+    column_gap = _scaled(settings.inner_padding, scale)
+    column_width = max(1, (content_width - column_gap) // 2)
+    if image_count == 2:
+        return (column_width, column_width)
+    if image_count == 3:
+        return (content_width, column_width, column_width)
+    return (column_width, column_width, column_width, column_width)
+
+
+def _reserved_label_height(fitted: FittedText | None, settings: RenderSettings) -> int:
+    if fitted is None:
+        return 0
+    return max(
+        settings.label_min_height,
+        settings.label_padding_top + fitted.height + settings.label_padding_bottom,
+    )
 
 
 def _draw_images(
@@ -350,9 +390,10 @@ def _draw_labels(
     for item, block in zip(items, layout.blocks):
         if block.label_rect is None:
             continue
+        text_rect = _label_text_rect(block.label_rect, settings)
         result = draw_text_in_rect(
             result,
-            block.label_rect,
+            text_rect,
             item.label,
             font_path=settings.font_path,
             preferred_size=settings.label_font_size,
@@ -361,8 +402,29 @@ def _draw_labels(
             line_spacing=settings.line_spacing,
             color=parse_color(settings.label_color),
             uppercase=settings.uppercase_labels,
+            vertical_align=_normalized_label_vertical_align(settings.label_vertical_align),
+            clip=settings.label_clip,
         )
     return result
+
+
+def _label_text_rect(label_rect: Rect, settings: RenderSettings) -> Rect:
+    top = max(0, settings.label_padding_top)
+    bottom = max(0, settings.label_padding_bottom)
+    height = max(0, label_rect.height - top - bottom)
+    return Rect(label_rect.x, label_rect.y + top, label_rect.width, height)
+
+
+def _normalized_label_vertical_align(value: str) -> str:
+    if value in {"top", "center", "bottom"}:
+        return value
+    warnings.warn(
+        prefixed_message(
+            f"label_vertical_align={value!r} no es válido; se usará 'center'."
+        ),
+        stacklevel=3,
+    )
+    return "center"
 
 
 def _draw_logo(

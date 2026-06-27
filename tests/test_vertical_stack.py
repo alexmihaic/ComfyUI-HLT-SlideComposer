@@ -4,7 +4,7 @@ import pytest
 
 from hlt_slide.config import CanvasSize
 from hlt_slide.exceptions import LayoutOverflowError
-from hlt_slide.layouts import calculate_vertical_stack
+from hlt_slide.layouts import VerticalStackMetrics, calculate_vertical_stack
 
 
 def _all_rects(layout):
@@ -118,3 +118,17 @@ def test_vertical_stack_overflow_reports_context() -> None:
             reserve_footer=True,
             footer_height=40,
         )
+
+
+def test_vertical_stack_label_after_gap_controls_next_image_spacing() -> None:
+    label_after_gap = 26
+    layout = calculate_vertical_stack(
+        CanvasSize(1080, 1400),
+        image_count=2,
+        label_heights=(48, 32),
+        metrics=VerticalStackMetrics(block_gap=0, label_after_gap=label_after_gap),
+    )
+
+    first, second = layout.blocks
+    assert first.label_rect is not None
+    assert first.label_rect.bottom + label_after_gap <= second.image_rect.y

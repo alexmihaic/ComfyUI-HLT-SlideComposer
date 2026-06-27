@@ -121,6 +121,21 @@ def test_input_types_define_required_optional_and_defaults() -> None:
     assert required["contain_fill_mode"][0] == ("transparent", "cell_color")
     assert required["contain_fill_mode"][1]["default"] == "transparent"
     assert required["debug_layout"][1]["default"] is False
+    assert list(required)[-6:] == [
+        "label_padding_top",
+        "label_padding_bottom",
+        "label_after_gap",
+        "label_min_height",
+        "label_vertical_align",
+        "label_clip",
+    ]
+    assert required["label_padding_top"][1] == {"default": 6, "min": 0, "max": 256, "step": 1}
+    assert required["label_padding_bottom"][1] == {"default": 10, "min": 0, "max": 256, "step": 1}
+    assert required["label_after_gap"][1] == {"default": 20, "min": 0, "max": 512, "step": 1}
+    assert required["label_min_height"][1] == {"default": 32, "min": 0, "max": 512, "step": 1}
+    assert required["label_vertical_align"][0] == ("top", "center", "bottom")
+    assert required["label_vertical_align"][1]["default"] == "center"
+    assert required["label_clip"][1]["default"] is True
 
 
 def test_node_default_canvas_preset_is_visible_clean_and_resolvable() -> None:

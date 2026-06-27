@@ -7,7 +7,7 @@ from PIL import Image
 
 from hlt_slide.config import CanvasSize
 from hlt_slide.exceptions import LayoutOverflowError
-from hlt_slide.layouts import calculate_grid_2x2
+from hlt_slide.layouts import GridMetrics, calculate_grid_2x2
 from hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
 
 
@@ -110,6 +110,31 @@ def test_grid_four_images_uses_regular_two_by_two_geometry() -> None:
     assert first.image_rect.height == second.image_rect.height == third.image_rect.height == fourth.image_rect.height
     assert layout.footer_rect is not None
     assert layout.footer_rect.y > fourth.image_rect.bottom
+
+
+def test_grid_label_after_gap_keeps_next_row_below_labels() -> None:
+    label_after_gap = 28
+    layout = calculate_grid_2x2(
+        CanvasSize(1080, 1920),
+        image_count=4,
+        label_heights=(32, 72, 40, 40),
+        metrics=None,
+    )
+    default_gap = layout.blocks[2].image_rect.y - layout.blocks[0].label_rect.bottom
+    layout = calculate_grid_2x2(
+        CanvasSize(1080, 1920),
+        image_count=4,
+        label_heights=(32, 72, 40, 40),
+        metrics=GridMetrics(label_after_gap=label_after_gap),
+    )
+
+    first, second, third, fourth = layout.blocks
+    assert first.label_rect is not None
+    assert second.label_rect is not None
+    assert first.label_rect.height == second.label_rect.height == 72
+    assert first.label_rect.bottom + label_after_gap <= third.image_rect.y
+    assert second.label_rect.bottom + label_after_gap <= fourth.image_rect.y
+    assert third.image_rect.y - first.label_rect.bottom != default_gap
 
 
 def test_grid_rectangles_stay_inside_canvas_without_intersections_for_resolutions() -> None:
