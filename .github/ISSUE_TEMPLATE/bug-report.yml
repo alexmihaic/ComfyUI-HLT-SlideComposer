@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a reproducible problem with HLT Slide Composer
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing HLT Slide Composer. Please include enough detail to reproduce the issue.
+  - type: input
+    id: comfy_version
+    attributes:
+      label: ComfyUI version
+      description: Include the ComfyUI and frontend versions if available.
+      placeholder: "ComfyUI 0.26.1 / frontend 1.45.19"
+    validations:
+      required: true
+  - type: input
+    id: plugin_commit
+    attributes:
+      label: HLT Slide Composer version or commit
+      placeholder: "v0.1.0 or commit SHA"
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation type
+      options:
+        - Windows portable / embedded Python
+        - Desktop installation
+        - Manual Python environment
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Load the workflow...
+        2. Set layout to...
+        3. Queue the workflow...
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message or console output
+      render: shell
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow and screenshots
+      description: Attach a minimal workflow JSON and screenshots when possible. Remove private paths or assets first.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I restarted ComfyUI after installing or updating the node.
+          required: true
+        - label: I checked that the repository is up to date with `git pull origin main`.
+          required: true
+        - label: I removed private information from logs, paths, screenshots and workflows.
+          required: true
