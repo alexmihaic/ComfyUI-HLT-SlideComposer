@@ -36,6 +36,67 @@ La integracion se hace mediante funciones puras del renderer:
 
 `render_vertical_stack(...)` conserva su contrato publico.
 
+## Experimental ComfyUI integration
+
+En Fase 8C, `adaptive_mosaic` se anade como layout experimental del nodo
+`HLT · Slide Composer`. La rama no esta fusionada en `main` y no hay release.
+
+Seleccion:
+
+```text
+layout = adaptive_mosaic
+adaptive_strategy = balanced | editorial | compact
+adaptive_hero = auto | image_1 | image_2 | image_3 | image_4
+```
+
+El valor predeterminado historico de `layout` sigue siendo `vertical_stack`.
+`auto_social` no cambia: con 1-3 imagenes usa `vertical_stack` y con 4 imagenes
+usa `grid_2x2`.
+
+`adaptive_strategy` controla la ponderacion interna:
+
+- `balanced`: legibilidad y tamanos estables;
+- `editorial`: permite una imagen dominante;
+- `compact`: penaliza mas el area vacia.
+
+`adaptive_hero=auto` no fuerza protagonista. Si se elige `image_1` a `image_4`,
+esa entrada intenta recibir el area dominante. Si la entrada no esta conectada,
+el nodo emite una advertencia con prefijo `[HLT Slide Composer]` y vuelve a
+seleccion automatica, sin reasignar el hero a otra imagen.
+
+Los dos widgets nuevos se colocan al final del orden historico:
+
+```text
+label_vertical_align
+label_clip
+adaptive_strategy
+adaptive_hero
+```
+
+Los workflows antiguos que no contienen estos campos usan:
+
+```text
+adaptive_strategy = balanced
+adaptive_hero = auto
+```
+
+Cuando `layout != adaptive_mosaic`, el nodo mantiene el flujo anterior y llama
+a `render_vertical_stack(...)`, que tambien resuelve `grid_2x2` y
+`auto_social`.
+
+Cuando `layout == adaptive_mosaic`, el nodo llama a
+`render_adaptive_mosaic(...)` y construye `AdaptiveMosaicSettings` con:
+
+- estrategia desde `adaptive_strategy`;
+- hero desde `adaptive_hero`;
+- `preserve_order=True`;
+- `preserve_aspect=True`;
+- `gap` desde `inner_padding`;
+- padding y alturas de etiqueta desde los controles existentes.
+
+No se exponen todavia pesos, tamanos minimos, plantilla manual ni controles de
+filas justificadas.
+
 ## Plantillas candidatas
 
 Una imagen:
@@ -137,6 +198,11 @@ Motivo:
 
 Las esquinas redondeadas y los bordes si se aplican.
 
+Esta excepcion tambien aplica desde el nodo ComfyUI: aunque el usuario tenga
+`image_fit=cover`, `crop_anchor=top` o `contain_fill_mode=cell_color`, las
+imagenes adaptativas se renderizan con proporcion conservada y bandas
+transparentes para que se vea el fondo real.
+
 ## Filas justificadas
 
 Las plantillas justificadas soportan divisiones `1+3`, `2+2` y `3+1`.
@@ -220,26 +286,28 @@ El debug experimental muestra:
 - `LAYOUT: ADAPTIVE_MOSAIC`
 - `TEMPLATE`
 - `STRATEGY`
+- `HERO`
 - `SCORE`
-- `UNUSED`
+- `UNUSED AREA`
 - penalizaciones principales
 - rectangulos `TITLE`, `IMAGE N`, `LABEL N`, `FOOTER` y `LOGO`.
 
 ## Limitaciones
 
-- No esta expuesto en ComfyUI.
+- Esta expuesto solo en esta rama experimental; no esta fusionado en `main`.
 - No calcula foco semantico de imagen.
 - Solo soporta de una a cuatro imagenes.
 - El comportamiento de `hero_index` es geometrico, no artistico.
 - Puede dejar bastante fondo visible cuando conservar ratios compite con
   jerarquia editorial.
-- La seleccion de estrategia sigue siendo experimental y no tiene widget.
+- La integracion no se ha probado manualmente dentro de la copia instalada en
+  `custom_nodes`; solo se valida desde el paquete de la rama.
+- El workflow experimental usa nombres de imagen relativos como marcadores; el
+  usuario debe sustituirlos por recursos locales en ComfyUI.
 
-## Pendiente para Fase 8C
+## Pendiente para Fase 8D
 
-- decidir como se mapeara `adaptive_mosaic` a un layout visible;
-- definir controles publicos sin alterar de forma brusca el nodo;
-- decidir si las estrategias seran widgets o presets internos;
+- validar manualmente en la copia instalada de ComfyUI;
 - revisar defaults visuales con casos reales;
 - decidir si se permite una opcion de menor area vacia aunque reduzca jerarquia;
-- ampliar validacion manual dentro de ComfyUI cuando se exponga el layout.
+- decidir si se publica el layout en `main` o si se mantiene experimental mas tiempo.

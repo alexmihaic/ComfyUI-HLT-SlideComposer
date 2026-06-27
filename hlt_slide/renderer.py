@@ -180,6 +180,7 @@ def render_adaptive_mosaic(
             effective_layout="adaptive_mosaic",
             candidate=candidate,
             strategy=(adaptive_settings or AdaptiveMosaicSettings()).strategy,
+            hero=_adaptive_debug_hero(adaptive_settings),
         )
     return output.convert("RGB")
 
@@ -439,7 +440,7 @@ def _adaptive_settings_from_render_settings(
         minimum_image_height=base.minimum_image_height,
         label_padding_top=settings.label_padding_top,
         label_padding_bottom=settings.label_padding_bottom,
-        label_after_gap=settings.image_label_gap,
+        label_after_gap=base.label_after_gap if adaptive_settings is not None else settings.label_after_gap,
         label_min_height=settings.label_min_height,
         footer_height=0,
         footer_gap=0,
@@ -723,11 +724,12 @@ def _draw_debug(
     effective_layout: str,
     candidate: MosaicCandidate | None = None,
     strategy: str | None = None,
+    hero: str | None = None,
 ) -> None:
     draw = ImageDraw.Draw(output)
     draw.text((8, 8), f"LAYOUT: {effective_layout.upper()}", fill=(255, 255, 0))
     if candidate is not None:
-        _draw_adaptive_debug_text(draw, candidate, strategy)
+        _draw_adaptive_debug_text(draw, candidate, strategy, hero)
     if layout.title_rect is not None:
         _debug_rect(draw, layout.title_rect, "TITLE", (255, 255, 0))
     for index, block in enumerate(layout.blocks, start=1):
@@ -760,13 +762,15 @@ def _draw_adaptive_debug_text(
     draw: ImageDraw.ImageDraw,
     candidate: MosaicCandidate,
     strategy: str | None,
+    hero: str | None,
 ) -> None:
     diagnostics = candidate.diagnostics
     lines = (
         f"TEMPLATE: {candidate.template_name}",
         f"STRATEGY: {(strategy or '').upper()}",
+        f"HERO: {hero or 'AUTO'}",
         f"SCORE: {candidate.score:.1f}",
-        f"UNUSED: {diagnostics.get('unused_area_percentage', 0):.1f}%",
+        f"UNUSED AREA: {diagnostics.get('unused_area_percentage', 0):.1f}%",
         f"unused_area: {candidate.penalties['unused_area']:.1f}",
         f"tiny_cells: {candidate.penalties['tiny_cells']:.1f}",
         f"visual_imbalance: {candidate.penalties['visual_imbalance']:.1f}",
@@ -775,6 +779,12 @@ def _draw_adaptive_debug_text(
     )
     for index, line in enumerate(lines, start=1):
         draw.text((8, 8 + (index * 12)), line, fill=(255, 255, 0))
+
+
+def _adaptive_debug_hero(settings: AdaptiveMosaicSettings | None) -> str:
+    if settings is None or settings.hero_index is None:
+        return "AUTO"
+    return f"IMAGE {settings.hero_index + 1}"
 
 
 def _scaled(value: int, scale: float) -> int:

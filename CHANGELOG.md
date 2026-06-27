@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 
 - Experimental pure geometry engine for future `adaptive_mosaic` layouts.
 - Experimental Pillow renderer integration for `adaptive_mosaic`, available only through pure renderer APIs, scripts, and tests.
+- Experimental ComfyUI node integration for `adaptive_mosaic` with strategy and hero controls appended after the historical widget order.
 
 ## 0.1.0 - 2026-06-27
 
