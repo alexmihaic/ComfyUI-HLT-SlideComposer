@@ -33,6 +33,7 @@ VerticalAlign = Literal["top", "center", "bottom"]
 
 @dataclass(frozen=True)
 class TextRoleStyle:
+    maximum_font_size: int
     preferred_font_size: int
     minimum_font_size: int
     max_lines: int
@@ -42,13 +43,13 @@ class TextRoleStyle:
 
 BASE_ROLE_STYLES: Mapping[str, TextRoleStyle] = MappingProxyType(
     {
-        "number": TextRoleStyle(184, 42, 2, 6),
-        "headline": TextRoleStyle(112, 34, 4, 8),
-        "quote": TextRoleStyle(88, 30, 7, 10),
-        "subheadline": TextRoleStyle(64, 26, 5, 8),
-        "body": TextRoleStyle(44, 22, 10, 8),
-        "label": TextRoleStyle(32, 18, 3, 5),
-        "caption": TextRoleStyle(28, 16, 4, 5),
+        "number": TextRoleStyle(300, 220, 48, 2, 6),
+        "headline": TextRoleStyle(220, 168, 40, 4, 8),
+        "quote": TextRoleStyle(170, 120, 36, 7, 10),
+        "subheadline": TextRoleStyle(150, 104, 30, 5, 8),
+        "body": TextRoleStyle(100, 68, 24, 10, 8),
+        "label": TextRoleStyle(82, 56, 20, 3, 5),
+        "caption": TextRoleStyle(68, 44, 18, 4, 5),
     }
 )
 
@@ -74,6 +75,7 @@ class TextRenderSettings:
     vertical_align: str = "auto"
     uppercase: bool = False
     clipping: bool = True
+    break_long_words: bool = False
     warn_on_truncation: bool = True
     logo_width_percent: float = 18.0
     logo_max_height_percent: float = 8.0
@@ -113,6 +115,11 @@ class FittedTextBlock:
     vertical_alignment: str
     color: RGBA
     was_truncated: bool
+    preferred_font_size: int
+    maximum_font_size: int
+    text_width_usage_percentage: float
+    text_height_usage_percentage: float
+    preserve_words: bool
     fitted_text: FittedText
 
 
@@ -133,6 +140,7 @@ def scaled_role_style(role: str, canvas_size: CanvasSize, *, font_scale: float =
     base = BASE_ROLE_STYLES[role]
     scale = (canvas_size.width / BASE_CANVAS_WIDTH) * font_scale
     return TextRoleStyle(
+        maximum_font_size=max(1, round(base.maximum_font_size * scale)),
         preferred_font_size=max(1, round(base.preferred_font_size * scale)),
         minimum_font_size=max(1, round(base.minimum_font_size * scale)),
         max_lines=base.max_lines,
@@ -173,6 +181,20 @@ def measure_text_composition(
             "accent_source_index": accent_index,
             "logo_reserved": render_settings.reserve_logo_space and logo_rect is not None,
             "debug_layout": render_settings.debug_layout,
+            "block_metrics": tuple(
+                {
+                    "source_index": block.source_index,
+                    "role": block.role,
+                    "preferred_font_size": block.preferred_font_size,
+                    "maximum_font_size": block.maximum_font_size,
+                    "selected_font_size": block.font_size,
+                    "text_width_usage_percentage": block.text_width_usage_percentage,
+                    "text_height_usage_percentage": block.text_height_usage_percentage,
+                    "preserve_words": block.preserve_words,
+                    "was_truncated": block.was_truncated,
+                }
+                for block in fitted_blocks
+            ),
         }
     )
     return TextCompositionRenderPlan(
@@ -310,16 +332,16 @@ def _fit_block(
     style = scaled_role_style(source_block.role, canvas_size, font_scale=settings.font_scale)
     original_text = source_block.text
     text_for_render = original_text.upper() if settings.uppercase else original_text
-    fitted = fit_text(
+    fitted = _fit_text_largest(
         text_for_render,
         font_path=settings.font_path,
-        preferred_size=style.preferred_font_size,
+        maximum_size=style.maximum_font_size,
         minimum_size=style.minimum_font_size,
         max_width=layout_block.inner_rect.width,
         max_height=layout_block.inner_rect.height,
         max_lines=style.max_lines,
         line_spacing=style.line_spacing,
-        uppercase=False,
+        break_long_words=settings.break_long_words,
     )
     if fitted.was_truncated and settings.warn_on_truncation:
         warnings.warn(
@@ -341,8 +363,54 @@ def _fit_block(
         vertical_alignment=vertical_alignment,
         color=color,
         was_truncated=fitted.was_truncated,
+        preferred_font_size=style.preferred_font_size,
+        maximum_font_size=style.maximum_font_size,
+        text_width_usage_percentage=_usage(fitted.width, layout_block.inner_rect.width),
+        text_height_usage_percentage=_usage(fitted.height, layout_block.inner_rect.height),
+        preserve_words=not settings.break_long_words,
         fitted_text=fitted,
     )
+
+
+def _fit_text_largest(
+    text: str,
+    *,
+    font_path: str | None,
+    maximum_size: int,
+    minimum_size: int,
+    max_width: int,
+    max_height: int,
+    max_lines: int,
+    line_spacing: int,
+    break_long_words: bool,
+) -> FittedText:
+    best_truncated: FittedText | None = None
+    for size in range(maximum_size, minimum_size - 1, -1):
+        fitted = fit_text(
+            text,
+            font_path=font_path,
+            preferred_size=size,
+            minimum_size=size,
+            max_width=max_width,
+            max_height=max_height,
+            max_lines=max_lines,
+            line_spacing=line_spacing,
+            uppercase=False,
+            break_long_words=break_long_words,
+        )
+        if not fitted.was_truncated and fitted.width <= max_width and fitted.height <= max_height:
+            return fitted
+        if best_truncated is None or fitted.font_size < best_truncated.font_size:
+            best_truncated = fitted
+    if best_truncated is None:
+        raise ValueError("Unable to fit text.")
+    return best_truncated
+
+
+def _usage(used: int, available: int) -> float:
+    if available <= 0:
+        return 0.0
+    return round(min(100.0, (used / available) * 100.0), 6)
 
 
 def _resolved_alignment(
@@ -472,10 +540,22 @@ def _draw_debug(output: Image.Image, plan: TextCompositionRenderPlan) -> None:
     _debug_rect(draw, plan.geometry.content_rect, "content", (120, 120, 120), width=2)
     for block in plan.fitted_blocks:
         _debug_rect(draw, block.rect, f"text_{block.source_index + 1} {block.role}", (233, 33, 36), width=2)
-        _debug_rect(draw, block.inner_rect, f"{block.font_size}px {block.line_count}l trunc={block.was_truncated}", (0, 180, 255), width=1)
+        _debug_rect(
+            draw,
+            block.inner_rect,
+            f"pref={block.preferred_font_size} max={block.maximum_font_size} sel={block.font_size}",
+            (0, 180, 255),
+            width=1,
+        )
         draw.text(
             (block.rect.x + 4, block.rect.y + 18),
-            f"{block.alignment}/{block.vertical_alignment}",
+            (
+                f"{block.alignment}/{block.vertical_alignment} "
+                f"{block.line_count}l trunc={block.was_truncated} "
+                f"w={block.text_width_usage_percentage:.1f}% "
+                f"h={block.text_height_usage_percentage:.1f}% "
+                f"preserve_words={block.preserve_words}"
+            ),
             fill=(255, 255, 0),
         )
     if plan.logo_rect is not None:

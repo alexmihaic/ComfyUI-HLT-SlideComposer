@@ -83,6 +83,16 @@ La línea v0.3.0 está prevista como primera versión experimental del Text Comp
 - El resaltado parcial de palabras queda pospuesto.
 - Los presets visuales quedan pospuestos.
 
+## Decisions made in Phase 9B.1
+
+- Text Composer no parte palabras automáticamente durante el wrapping.
+- El renderer usa largest-fit typography: busca el mayor tamaño del rol que cabe en el bloque.
+- Los cuatro roles por defecto pasan a ser `headline`.
+- Los roles jerárquicos quedan como elección manual.
+- Los ejemplos de QA se revisan para usar roles coherentes con su intención visual.
+- Los tokens demasiado largos se truncan con ellipsis cuando no caben ni al tamaño mínimo.
+- Los saltos manuales siguen siendo saltos obligatorios y no se confunden con wrapping automático.
+
 ## Open decisions for Phase 9C
 
 - Orden definitivo de widgets.

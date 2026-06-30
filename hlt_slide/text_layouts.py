@@ -27,7 +27,7 @@ TEXT_ROLES = (
     "number",
     "label",
 )
-DEFAULT_TEXT_ROLES = ("headline", "subheadline", "body", "caption")
+DEFAULT_TEXT_ROLES = ("headline", "headline", "headline", "headline")
 ROLE_GEOMETRY_WEIGHTS: Mapping[str, float] = MappingProxyType(
     {
         "number": 1.50,

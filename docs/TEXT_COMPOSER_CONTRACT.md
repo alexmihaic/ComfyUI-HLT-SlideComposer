@@ -119,3 +119,7 @@ render_text_composition(...)
 `measure_text_composition` prepara canvas, bloques activos, acento, reserva de logo, geometría y fitting tipográfico. `render_text_composition` dibuja fondo, texto, logo y debug sobre una imagen RGB.
 
 Esta API sigue siendo interna hasta Phase 9C.
+
+## Phase 9B.1 calibration
+
+Los defaults internos del futuro Text Composer son cuatro `headline` para evitar jerarquías accidentales en composiciones generales. El renderer conserva palabras completas por defecto y aplica una estrategia largest-fit por rol. `text_engine.fit_text` mantiene compatibilidad con Slide Composer mediante `break_long_words=True` como valor predeterminado; Text Composer usa `break_long_words=False`.

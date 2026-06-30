@@ -24,6 +24,32 @@ def test_auto_text_renders_all_effective_layouts() -> None:
         assert all(block.inner_rect.width > 0 and block.inner_rect.height > 0 for block in plan.fitted_blocks)
 
 
+def test_visual_contracts_after_typography_calibration() -> None:
+    centered = measure_text_composition(
+        ("PENSAR CON\nMÁS CONTEXTO",),
+        roles=("headline",),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="centered_statement"),
+    )
+    grid = measure_text_composition(
+        ("CONTEXTO", "CRITERIO", "DIRECCIÓN", "EJECUCIÓN"),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="grid_2x2"),
+    )
+    quote = measure_text_composition(
+        ("LA HERRAMIENTA\nNO SUSTITUYE\nEL CRITERIO.", "HAZ LO TUYO"),
+        roles=("quote", "caption"),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="editorial_quote"),
+    )
+
+    assert centered.fitted_blocks[0].font_size >= 100
+    grid_sizes = [block.font_size for block in grid.fitted_blocks]
+    assert min(grid_sizes) >= 64
+    assert max(grid_sizes) - min(grid_sizes) <= 40
+    assert quote.fitted_blocks[1].font_size >= 48
+
+
 def test_background_modes_produce_distinct_robust_outputs() -> None:
     background = Image.new("RGB", (80, 160), (0, 80, 180))
     solid = render_text_composition(

@@ -21,15 +21,15 @@ render_text_composition(...)
 
 Los estilos base están definidos para un canvas de 1080 px de ancho:
 
-| Rol | Preferred | Minimum | Max lines | Line spacing |
-| --- | ---: | ---: | ---: | ---: |
-| `number` | 184 | 42 | 2 | 6 |
-| `headline` | 112 | 34 | 4 | 8 |
-| `quote` | 88 | 30 | 7 | 10 |
-| `subheadline` | 64 | 26 | 5 | 8 |
-| `body` | 44 | 22 | 10 | 8 |
-| `label` | 32 | 18 | 3 | 5 |
-| `caption` | 28 | 16 | 4 | 5 |
+| Rol | Maximum | Preferred | Minimum | Max lines | Line spacing |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `number` | 300 | 220 | 48 | 2 | 6 |
+| `headline` | 220 | 168 | 40 | 4 | 8 |
+| `quote` | 170 | 120 | 36 | 7 | 10 |
+| `subheadline` | 150 | 104 | 30 | 5 | 8 |
+| `body` | 100 | 68 | 24 | 10 | 8 |
+| `label` | 82 | 56 | 20 | 3 | 5 |
+| `caption` | 68 | 44 | 18 | 4 | 5 |
 
 Se escalan con:
 
@@ -38,6 +38,21 @@ canvas_width / 1080 * font_scale
 ```
 
 `font_scale` se valida entre `0.25` y `4.0`.
+
+Phase 9B.1 usa una estrategia largest-fit: intenta el tamaño máximo del rol y baja de forma determinista hasta encontrar el tamaño mayor que cabe completo en el `inner_rect`. El tamaño preferido queda documentado como referencia de intención, pero no limita el crecimiento cuando el bloque tiene espacio suficiente.
+
+## Defaults de roles
+
+Los cuatro roles internos por defecto del futuro Text Composer son:
+
+```text
+headline
+headline
+headline
+headline
+```
+
+La jerarquía editorial mediante `body`, `caption`, `quote` u otros roles debe ser una elección explícita.
 
 ## Alineación automática
 
@@ -67,11 +82,15 @@ No hay resaltado parcial, Markdown ni HTML.
 
 Cada bloque usa `fit_text` de `text_engine.py`:
 
-1. tamaño preferido del rol;
-2. reducción hasta mínimo;
+1. tamaño máximo del rol;
+2. reducción hasta mínimo buscando el mayor tamaño que cabe;
 3. wrapping;
 4. límite de líneas;
 5. truncado como último recurso.
+
+Text Composer conserva palabras completas durante el wrapping automático. Los saltos manuales siguen siendo obligatorios. Si un token aislado no cabe en el tamaño mínimo, se trunca con ellipsis; no se insertan guiones ni separación silábica.
+
+`text_engine.fit_text` conserva compatibilidad hacia atrás porque `break_long_words=True` sigue siendo el valor predeterminado. Text Composer llama al motor con `break_long_words=False`.
 
 Si hay truncado y `warn_on_truncation=True`, se emite:
 
@@ -115,8 +134,11 @@ Con `reserve_logo_space=True`, la geometría textual reserva espacio inferior an
 - slot original;
 - rol;
 - tamaño de fuente;
+- tamaño preferido y máximo;
 - número de líneas;
 - truncado;
+- porcentaje de uso de ancho y alto;
+- conservación de palabras;
 - alineación;
 - `logo_rect` si existe.
 

@@ -9,6 +9,9 @@ All notable changes to this project are documented in this file.
 - Experimental pure text-layout engine for the future `HLT · Text Composer` node.
 - Experimental Pillow text renderer for the future `HLT · Text Composer` node.
 - Role-based typography, automatic alignment, accent targeting, backgrounds, logo composition and debug rendering.
+- Calibrated Text Composer typography to use the largest fitting role size.
+- Preserved complete words during Text Composer wrapping.
+- Changed future Text Composer default roles to four headlines.
 
 ## 0.2.0 - 2026-06-30
 

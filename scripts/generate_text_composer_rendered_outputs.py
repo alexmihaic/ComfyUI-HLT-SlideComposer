@@ -32,7 +32,7 @@ def main() -> None:
             "02-split-portrait.png",
             render_text_composition(
                 ("NO ES GENERAR MÁS", "ES DECIDIR MEJOR"),
-                roles=("headline", "subheadline"),
+                roles=("headline", "headline"),
                 settings=TextRenderSettings(layout="split_2"),
             ),
         ),
@@ -40,7 +40,7 @@ def main() -> None:
             "03-split-landscape.png",
             render_text_composition(
                 ("NO ES GENERAR MÁS", "ES DECIDIR MEJOR"),
-                roles=("headline", "subheadline"),
+                roles=("headline", "headline"),
                 canvas_size=CanvasSize(1920, 1080),
                 settings=TextRenderSettings(layout="split_2", accent_target="text_2"),
             ),
@@ -49,7 +49,7 @@ def main() -> None:
             "04-vertical-manifest.png",
             render_text_composition(
                 ("PRIMERO MIRAR", "DESPUÉS PENSAR", "LUEGO CREAR"),
-                roles=("headline", "subheadline", "body"),
+                roles=("headline", "headline", "headline"),
                 settings=TextRenderSettings(layout="vertical_stack"),
             ),
         ),
@@ -57,7 +57,7 @@ def main() -> None:
             "05-grid-concepts.png",
             render_text_composition(
                 ("CONTEXTO", "CRITERIO", "DIRECCIÓN", "EJECUCIÓN"),
-                roles=("number", "headline", "label", "caption"),
+                roles=("headline", "headline", "headline", "headline"),
                 settings=TextRenderSettings(layout="grid_2x2", accent_target="text_1"),
             ),
         ),
@@ -89,7 +89,7 @@ def main() -> None:
             "08-accent-targets.png",
             render_text_composition(
                 ("UNO", "DOS", "TRES", "CUATRO"),
-                roles=("label", "label", "label", "label"),
+                roles=("headline", "headline", "headline", "headline"),
                 settings=TextRenderSettings(layout="grid_2x2", accent_target="text_3"),
             ),
         ),
@@ -105,6 +105,18 @@ def main() -> None:
                     reserve_logo_space=True,
                     accent_target="first_active",
                     font_scale=1.1,
+                ),
+            ),
+        ),
+        _save(
+            "10-long-word-and-wrapping.png",
+            render_text_composition(
+                ("GENERAR\nCONTEXTO\nCRITERIO\nEXTRAORDINARIAMENTEEXTRAORDINARIAMENTE",),
+                roles=("headline",),
+                settings=TextRenderSettings(
+                    layout="centered_statement",
+                    warn_on_truncation=True,
+                    accent_target="first_active",
                 ),
             ),
         ),

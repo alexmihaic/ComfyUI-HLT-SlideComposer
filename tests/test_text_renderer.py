@@ -15,6 +15,7 @@ from hlt_slide.text_renderer import (
     render_text_composition,
     scaled_role_style,
 )
+from hlt_slide.text_layouts import DEFAULT_TEXT_ROLES
 
 
 def _logo() -> Image.Image:
@@ -42,16 +43,18 @@ def test_role_style_table_is_complete_immutable_and_scaled() -> None:
         "label",
         "caption",
     }
-    assert BASE_ROLE_STYLES["number"].preferred_font_size == 184
-    assert BASE_ROLE_STYLES["headline"].minimum_font_size == 34
+    assert BASE_ROLE_STYLES["number"].maximum_font_size == 300
+    assert BASE_ROLE_STYLES["number"].preferred_font_size == 220
+    assert BASE_ROLE_STYLES["headline"].maximum_font_size == 220
+    assert BASE_ROLE_STYLES["headline"].minimum_font_size == 40
     assert BASE_ROLE_STYLES["quote"].max_lines == 7
     assert BASE_ROLE_STYLES["caption"].line_spacing == 5
     with pytest.raises(TypeError):
         BASE_ROLE_STYLES["headline"] = BASE_ROLE_STYLES["body"]  # type: ignore[index]
 
     scaled = scaled_role_style("headline", CanvasSize(2160, 3840), font_scale=0.5)
-    assert scaled.preferred_font_size == 112
-    assert scaled.minimum_font_size == 34
+    assert scaled.preferred_font_size == 168
+    assert scaled.minimum_font_size == 40
     assert scaled.line_spacing == 8
 
 
@@ -60,6 +63,10 @@ def test_font_scale_validation() -> None:
         TextRenderSettings(font_scale=0.1)
     with pytest.raises(ValueError, match="font_scale"):
         TextRenderSettings(font_scale=4.5)
+
+
+def test_default_text_roles_are_four_headlines() -> None:
+    assert DEFAULT_TEXT_ROLES == ("headline", "headline", "headline", "headline")
 
 
 @pytest.mark.parametrize("role", ["headline", "subheadline", "body", "quote", "number", "label", "caption"])
@@ -79,6 +86,88 @@ def test_measure_fits_each_role_and_preserves_original_text(role: str) -> None:
     assert block.font_size >= BASE_ROLE_STYLES[role].minimum_font_size
     assert block.rect == plan.geometry.blocks[0].rect
     assert block.inner_rect == plan.geometry.blocks[0].inner_rect
+
+
+def test_text_composer_preserves_words_and_manual_newlines() -> None:
+    plan = measure_text_composition(
+        ("GENERAR\nCONTEXTO CRITERIO\nDIRECCIÓN EJECUCIÓN",),
+        roles=("headline",),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="centered_statement", warn_on_truncation=False),
+    )
+    lines = plan.fitted_blocks[0].fitted_text.lines
+
+    assert any("GENERAR" == line for line in lines)
+    assert any("CONTEXTO" in line for line in lines)
+    assert any("CRITERIO" in line for line in lines)
+    assert any("DIRECCIÓN" in line for line in lines)
+    assert any("EJECUCIÓN" in line for line in lines)
+    assert "GENER" not in lines
+    assert "AR" not in lines
+    assert "CONT" not in lines
+    assert "EXTO" not in lines
+    assert "CRITE" not in lines
+    assert "RIO" not in lines
+
+
+def test_long_unbreakable_word_truncates_without_arbitrary_word_pieces() -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        plan = measure_text_composition(
+            ("", "EXTRAORDINARIAMENTEEXTRAORDINARIAMENTE"),
+            roles=("headline", "headline"),
+            canvas_size=CanvasSize(220, 260),
+            settings=TextRenderSettings(layout="centered_statement", warn_on_truncation=True),
+        )
+
+    block = plan.fitted_blocks[0]
+    assert block.source_index == 1
+    assert block.was_truncated is True
+    assert block.fitted_text.lines[-1].endswith("…") or block.fitted_text.lines[-1].endswith("â€¦")
+    assert not any(line in {"EXTRA", "ORDINARIAMENTE"} for line in block.fitted_text.lines)
+    assert any("text_2 was truncated" in str(item.message) for item in caught)
+
+
+def test_largest_fit_uses_more_space_for_short_text_and_scales_with_rect() -> None:
+    small = measure_text_composition(
+        ("GENERAR",),
+        canvas_size=CanvasSize(320, 480),
+        settings=TextRenderSettings(layout="centered_statement"),
+    )
+    large = measure_text_composition(
+        ("GENERAR",),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="centered_statement"),
+    )
+    repeated = measure_text_composition(
+        ("GENERAR",),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="centered_statement"),
+    )
+
+    assert large.fitted_blocks[0].font_size > small.fitted_blocks[0].font_size
+    assert repeated.fitted_blocks[0].font_size == large.fitted_blocks[0].font_size
+    assert large.fitted_blocks[0].text_width_usage_percentage > 55
+    assert large.fitted_blocks[0].text_height_usage_percentage >= 15
+    assert large.diagnostics["block_metrics"][0]["selected_font_size"] == large.fitted_blocks[0].font_size
+    assert large.diagnostics["block_metrics"][0]["preserve_words"] is True
+
+
+def test_role_hierarchy_remains_when_blocks_are_equivalent() -> None:
+    headline = measure_text_composition(
+        ("TEXTO",),
+        roles=("headline",),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="centered_statement"),
+    )
+    caption = measure_text_composition(
+        ("TEXTO",),
+        roles=("caption",),
+        canvas_size=CanvasSize(1080, 1920),
+        settings=TextRenderSettings(layout="centered_statement"),
+    )
+
+    assert headline.fitted_blocks[0].font_size > caption.fitted_blocks[0].font_size
 
 
 def test_long_text_truncates_and_warns_with_original_source_index() -> None:

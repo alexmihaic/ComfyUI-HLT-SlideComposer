@@ -54,6 +54,7 @@ def fit_text(
     max_lines: int,
     line_spacing: int,
     uppercase: bool = False,
+    break_long_words: bool = True,
 ) -> FittedText:
     cleaned = _clean_text(text, uppercase=uppercase)
     if cleaned == "":
@@ -62,13 +63,21 @@ def fit_text(
 
     for size in range(preferred_size, minimum_size - 1, -1):
         font = resolve_font(font_path, size).font
-        lines = _wrap_text(cleaned, font, max_width)
+        lines = _wrap_text(cleaned, font, max_width, break_long_words=break_long_words)
         width, height = _measure_lines(lines, font, line_spacing)
         if len(lines) <= max_lines and width <= max_width and height <= max_height:
             return FittedText(lines, font, size, width, height, False)
 
     font = resolve_font(font_path, minimum_size).font
-    lines = _truncate_text(cleaned, font, max_width, max_height, max_lines, line_spacing)
+    lines = _truncate_text(
+        cleaned,
+        font,
+        max_width,
+        max_height,
+        max_lines,
+        line_spacing,
+        break_long_words=break_long_words,
+    )
     width, height = _measure_lines(lines, font, line_spacing)
     return FittedText(lines, font, minimum_size, width, height, True)
 
@@ -134,7 +143,13 @@ def _clean_text(text: str, *, uppercase: bool) -> str:
     return cleaned.upper() if uppercase else cleaned
 
 
-def _wrap_text(text: str, font: ImageFont.ImageFont, max_width: int) -> tuple[str, ...]:
+def _wrap_text(
+    text: str,
+    font: ImageFont.ImageFont,
+    max_width: int,
+    *,
+    break_long_words: bool = True,
+) -> tuple[str, ...]:
     wrapped: list[str] = []
     for paragraph in text.split("\n"):
         if paragraph == "":
@@ -150,10 +165,12 @@ def _wrap_text(text: str, font: ImageFont.ImageFont, max_width: int) -> tuple[st
                 wrapped.append(current)
             if _measure_line(word, font)[0] <= max_width:
                 current = word
-            else:
+            elif break_long_words:
                 pieces = _break_long_word(word, font, max_width)
                 wrapped.extend(pieces[:-1])
                 current = pieces[-1] if pieces else ""
+            else:
+                current = word
         if current:
             wrapped.append(current)
     return tuple(wrapped)
@@ -185,8 +202,10 @@ def _truncate_text(
     max_height: int,
     max_lines: int,
     line_spacing: int,
+    *,
+    break_long_words: bool = True,
 ) -> tuple[str, ...]:
-    wrapped = list(_wrap_text(text, font, max_width))
+    wrapped = list(_wrap_text(text, font, max_width, break_long_words=break_long_words))
     if not wrapped:
         return ()
 
