@@ -75,7 +75,9 @@ Reglas actuales:
 
 La decision se basa en el numero real de imagenes activas, por lo que las entradas opcionales desconectadas no dejan huecos ni alteran el conteo.
 
-La capa ComfyUI expone `vertical_stack`, `grid_2x2` y `auto_social` mediante el input `layout`. El renderer puro resuelve el layout efectivo antes de dibujar.
+La capa ComfyUI expone `vertical_stack`, `grid_2x2`, `auto_social` y
+`adaptive_mosaic` mediante el input `layout`. El renderer puro resuelve el
+layout efectivo antes de dibujar.
 
 ## Relleno de imagen en `contain`
 
@@ -86,16 +88,28 @@ Todos los layouts usan el mismo comportamiento de `contain_fill_mode`:
 
 Este ajuste no cambia la geometria de `vertical_stack`, `grid_2x2` ni `auto_social`; solo afecta a la composicion visual dentro del rectangulo de imagen.
 
-## Adaptive mosaic roadmap
+## `adaptive_mosaic`
 
-Esta seccion es una propuesta futura; no anade valores nuevos al input `layout` en la version actual.
+Estado: implementado para `v0.2.0`.
 
-- `adaptive_mosaic`: seleccionaria una composicion de mosaico segun cantidad de imagenes, proporcion dominante y espacio disponible.
-- `justified_rows`: distribuiria imagenes en filas justificadas, preservando aspect ratio y ajustando alturas por fila.
-- `masonry_columns`: organizaria imagenes en columnas de altura variable, util para referencias con proporciones mezcladas.
-- `hero_mosaic`: daria prioridad visual a una imagen principal y colocaria las restantes como apoyo.
-- preservacion de aspect ratio: todos estos layouts deberian mantener proporciones salvo eleccion explicita de `stretch`.
-- seleccion automatica de plantilla: `auto_social` podria evolucionar para escoger entre estas plantillas segun numero de imagenes, orientaciones y preset de lienzo.
+`adaptive_mosaic` selecciona una composicion de mosaico segun cantidad de
+imagenes, proporciones fuente, espacio disponible, estrategia y hero opcional.
+
+Caracteristicas:
+
+- genera candidatos automaticamente;
+- preserva aspect ratio;
+- no aplica crop;
+- no aplica stretch;
+- usa containment transparente;
+- soporta estrategias `balanced`, `editorial` y `compact`;
+- permite `adaptive_hero=auto` o `image_1` a `image_4`;
+- incluye filas justificadas internas;
+- mantiene el maximo de cuatro imagenes;
+- usa solo el primer frame de cada batch, como el resto del nodo.
+
+`auto_social` no selecciona `adaptive_mosaic` automaticamente. El usuario debe
+elegirlo explicitamente.
 
 ## Pendientes
 

@@ -16,7 +16,13 @@ if __package__:
         RESOLUTION_PRESETS,
     )
     from .hlt_slide.exceptions import prefixed_message
-    from .hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
+    from .hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
+    from .hlt_slide.renderer import (
+        RenderSettings,
+        SlideItem,
+        render_adaptive_mosaic,
+        render_vertical_stack,
+    )
     from .hlt_slide.tensor_io import (
         mask_like_to_pillow,
         numpy_to_pillow,
@@ -32,7 +38,13 @@ else:
         RESOLUTION_PRESETS,
     )
     from hlt_slide.exceptions import prefixed_message
-    from hlt_slide.renderer import RenderSettings, SlideItem, render_vertical_stack
+    from hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
+    from hlt_slide.renderer import (
+        RenderSettings,
+        SlideItem,
+        render_adaptive_mosaic,
+        render_vertical_stack,
+    )
     from hlt_slide.tensor_io import (
         mask_like_to_pillow,
         numpy_to_pillow,
@@ -64,7 +76,7 @@ class HLTSlideComposer:
                 "canvas_preset": (preset_names, {"default": "9:16 Social · 1080x1920"}),
                 "custom_width": ("INT", {"default": 1080, "min": 1, "max": 8192, "step": 1}),
                 "custom_height": ("INT", {"default": 1920, "min": 1, "max": 8192, "step": 1}),
-                "layout": (("vertical_stack", "grid_2x2", "auto_social"), {"default": "vertical_stack"}),
+                "layout": (("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic"), {"default": "vertical_stack"}),
                 "background_mode": (("solid", "image", "image_with_overlay"), {"default": "solid"}),
                 "background_color": ("STRING", {"default": "#000000"}),
                 "background_fit": (("cover", "contain", "stretch"), {"default": "cover"}),
@@ -111,6 +123,8 @@ class HLTSlideComposer:
                 "label_min_height": ("INT", {"default": 32, "min": 0, "max": 512, "step": 1}),
                 "label_vertical_align": (("top", "center", "bottom"), {"default": "center"}),
                 "label_clip": ("BOOLEAN", {"default": True}),
+                "adaptive_strategy": (("balanced", "editorial", "compact"), {"default": "balanced"}),
+                "adaptive_hero": (("auto", "image_1", "image_2", "image_3", "image_4"), {"default": "auto"}),
             },
             "optional": {
                 "image_2": ("IMAGE",),
@@ -174,6 +188,8 @@ class HLTSlideComposer:
         label_min_height: int = 32,
         label_vertical_align: str = "center",
         label_clip: bool = True,
+        adaptive_strategy: str = "balanced",
+        adaptive_hero: str = "auto",
         contain_fill_mode: str = "transparent",
         image_2: Any | None = None,
         image_3: Any | None = None,
@@ -238,15 +254,42 @@ class HLTSlideComposer:
             debug_layout=debug_layout,
             layout=layout,
         )
-        rendered = render_vertical_stack(
-            items,
-            title=title,
-            canvas_size=_node_canvas_size(canvas_preset, custom_width, custom_height),
-            settings=settings,
-            background_image=_optional_image_tensor_to_pillow(background_image, "background_image"),
-            logo_image=_optional_image_tensor_to_pillow(logo_image, "logo_image"),
-            logo_mask=_optional_mask_tensor_to_pillow(logo_mask, "logo_mask"),
-        )
+        canvas_size = _node_canvas_size(canvas_preset, custom_width, custom_height)
+        prepared_background = _optional_image_tensor_to_pillow(background_image, "background_image")
+        prepared_logo = _optional_image_tensor_to_pillow(logo_image, "logo_image")
+        prepared_logo_mask = _optional_mask_tensor_to_pillow(logo_mask, "logo_mask")
+        if layout == "adaptive_mosaic":
+            _validate_adaptive_strategy(adaptive_strategy)
+            rendered = render_adaptive_mosaic(
+                items,
+                title=title,
+                canvas_size=canvas_size,
+                settings=settings,
+                background_image=prepared_background,
+                logo_image=prepared_logo,
+                logo_mask=prepared_logo_mask,
+                adaptive_settings=AdaptiveMosaicSettings(
+                    strategy=adaptive_strategy,
+                    preserve_order=True,
+                    preserve_aspect=True,
+                    hero_index=_adaptive_hero_index(adaptive_hero, image_pairs),
+                    gap=inner_padding,
+                    label_padding_top=label_padding_top,
+                    label_padding_bottom=label_padding_bottom,
+                    label_after_gap=label_after_gap,
+                    label_min_height=label_min_height,
+                ),
+            )
+        else:
+            rendered = render_vertical_stack(
+                items,
+                title=title,
+                canvas_size=canvas_size,
+                settings=settings,
+                background_image=prepared_background,
+                logo_image=prepared_logo,
+                logo_mask=prepared_logo_mask,
+            )
         return (torch_from_numpy_image(pillow_to_bhwc_numpy(rendered)),)
 
 
@@ -281,6 +324,41 @@ def _optional_mask_tensor_to_pillow(tensor_like: Any | None, name: str) -> Image
     if array.ndim >= 3:
         _warn_if_batched(name, int(array.shape[0]))
     return mask_like_to_pillow(tensor_like)
+
+
+def _adaptive_hero_index(
+    adaptive_hero: str,
+    image_pairs: tuple[tuple[Any | None, str, str], ...],
+) -> int | None:
+    if adaptive_hero == "auto":
+        return None
+    hero_names = {"image_1": 0, "image_2": 1, "image_3": 2, "image_4": 3}
+    requested_slot = hero_names.get(adaptive_hero)
+    if requested_slot is None:
+        raise ValueError(prefixed_message(f"Invalid adaptive_hero value: {adaptive_hero!r}."))
+    if image_pairs[requested_slot][0] is None:
+        warnings.warn(
+            prefixed_message(
+                f"adaptive_hero={adaptive_hero!r} selected an image that is not connected; using auto."
+            ),
+            stacklevel=3,
+        )
+        return None
+    active_position = 0
+    for original_slot, (image, _label, _name) in enumerate(image_pairs):
+        if image is None:
+            continue
+        if original_slot == requested_slot:
+            return active_position
+        active_position += 1
+    return None
+
+
+def _validate_adaptive_strategy(adaptive_strategy: str) -> None:
+    if adaptive_strategy not in {"balanced", "editorial", "compact"}:
+        raise ValueError(
+            prefixed_message(f"Invalid adaptive_strategy value: {adaptive_strategy!r}.")
+        )
 
 
 def _tensor_like_to_array(tensor_like: Any) -> np.ndarray:

@@ -4,10 +4,10 @@ import importlib
 from pathlib import Path
 
 
-def test_package_imports_and_exposes_initial_version() -> None:
+def test_package_imports_and_exposes_current_version() -> None:
     package = importlib.import_module("hlt_slide")
 
-    assert package.__version__ == "0.1.0"
+    assert package.__version__ == "0.2.0"
 
 
 def test_phase_zero_directories_exist() -> None:

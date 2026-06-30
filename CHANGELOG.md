@@ -2,6 +2,51 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.0 - 2026-06-30
+
+### Added
+
+- `adaptive_mosaic` layout.
+- Automatic candidate generation.
+- Aspect-ratio preservation.
+- `balanced`, `editorial` and `compact` strategies.
+- Automatic and explicit hero selection.
+- Justified row candidates.
+- Adaptive labels.
+- Diagnostic scoring.
+- Adaptive debug overlay.
+- Public adaptive workflow.
+- Node and renderer validation scripts.
+
+### Changed
+
+- Public layout options now include `adaptive_mosaic`.
+- Two new widgets appended to the historical order:
+  - `adaptive_strategy`;
+  - `adaptive_hero`.
+- Adaptive images always use proportional transparent containment.
+- Documentation and examples updated for `v0.2.0`.
+
+### Fixed
+
+- Fixed adaptive label spacing mapping and minimum-size scaling against the resolved canvas.
+
+### Compatibility
+
+- Historical widget defaults remain unchanged.
+- `vertical_stack`, `grid_2x2` and `auto_social` retain their previous behavior.
+- Old workflows use default adaptive values without requiring JSON changes.
+- `auto_social` does not automatically select `adaptive_mosaic`.
+
+### Validated
+
+- Local pytest suite.
+- Package discovery.
+- Node integration.
+- Adaptive node contract.
+- Torch execution with ComfyUI embedded Python.
+- Manual execution inside the real ComfyUI interface.
+
 ## 0.1.0 - 2026-06-27
 
 ### Added

@@ -7,6 +7,8 @@ Included synthetic renderer outputs:
 - `hero.png`: contact sheet generated from safe synthetic examples.
 - `grid-example.png`: safe synthetic `grid_2x2` render.
 - `vertical-example.png`: safe synthetic `vertical_stack` render.
+- `adaptive-mosaic-example.png`: safe synthetic `adaptive_mosaic` render for v0.2.0.
+- `adaptive-mosaic-comparison.png`: safe synthetic comparison of historical and adaptive layouts.
 - `workflow-overview.png`: ComfyUI workflow screenshot showing Load Image nodes, background/logo inputs, `HLT · Slide Composer`, and Preview Image.
 
 Optional manual QA screenshot before creating the GitHub Release:

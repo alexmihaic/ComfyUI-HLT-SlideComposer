@@ -113,21 +113,38 @@ def test_input_types_define_required_optional_and_defaults() -> None:
     preset_names = tuple(preset.name for preset in RESOLUTION_PRESETS)
     assert required["canvas_preset"][0] == preset_names
     assert required["canvas_preset"][1]["default"] == "9:16 Social · 1080x1920"
-    assert required["layout"][0] == ("vertical_stack", "grid_2x2", "auto_social")
+    assert required["layout"][0] == (
+        "vertical_stack",
+        "grid_2x2",
+        "auto_social",
+        "adaptive_mosaic",
+    )
     assert required["layout"][1]["default"] == "vertical_stack"
+    assert required["adaptive_strategy"][0] == ("balanced", "editorial", "compact")
+    assert required["adaptive_strategy"][1]["default"] == "balanced"
+    assert required["adaptive_hero"][0] == (
+        "auto",
+        "image_1",
+        "image_2",
+        "image_3",
+        "image_4",
+    )
+    assert required["adaptive_hero"][1]["default"] == "auto"
     assert required["background_color"][1]["default"] == "#000000"
     assert required["title_color"][1]["default"] == "#E92124"
     assert required["label_color"][1]["default"] == "#E92124"
     assert required["contain_fill_mode"][0] == ("transparent", "cell_color")
     assert required["contain_fill_mode"][1]["default"] == "transparent"
     assert required["debug_layout"][1]["default"] is False
-    assert list(required)[-6:] == [
+    assert list(required)[-8:] == [
         "label_padding_top",
         "label_padding_bottom",
         "label_after_gap",
         "label_min_height",
         "label_vertical_align",
         "label_clip",
+        "adaptive_strategy",
+        "adaptive_hero",
     ]
     assert required["label_padding_top"][1] == {"default": 6, "min": 0, "max": 256, "step": 1}
     assert required["label_padding_bottom"][1] == {"default": 10, "min": 0, "max": 256, "step": 1}
@@ -136,6 +153,67 @@ def test_input_types_define_required_optional_and_defaults() -> None:
     assert required["label_vertical_align"][0] == ("top", "center", "bottom")
     assert required["label_vertical_align"][1]["default"] == "center"
     assert required["label_clip"][1]["default"] is True
+
+
+def test_complete_required_widget_order_is_stable() -> None:
+    node_module = importlib.import_module("nodes")
+    required = node_module.HLTSlideComposer.INPUT_TYPES()["required"]
+
+    assert list(required) == [
+        "image_1",
+        "canvas_preset",
+        "custom_width",
+        "custom_height",
+        "layout",
+        "background_mode",
+        "background_color",
+        "background_fit",
+        "background_opacity",
+        "overlay_opacity",
+        "title",
+        "label_1",
+        "label_2",
+        "label_3",
+        "label_4",
+        "title_color",
+        "label_color",
+        "cell_background_color",
+        "image_fit",
+        "contain_fill_mode",
+        "crop_anchor",
+        "font_path",
+        "title_font_size",
+        "label_font_size",
+        "minimum_font_size",
+        "max_label_lines",
+        "line_spacing",
+        "outer_margin",
+        "top_margin",
+        "bottom_margin",
+        "title_gap",
+        "block_gap",
+        "image_label_gap",
+        "inner_padding",
+        "corner_radius",
+        "border_width",
+        "border_color",
+        "logo_width_percent",
+        "logo_max_height_percent",
+        "logo_opacity",
+        "logo_bottom_offset",
+        "invert_logo_mask",
+        "uppercase_title",
+        "uppercase_labels",
+        "debug_layout",
+        "label_padding_top",
+        "label_padding_bottom",
+        "label_after_gap",
+        "label_min_height",
+        "label_vertical_align",
+        "label_clip",
+        "adaptive_strategy",
+        "adaptive_hero",
+    ]
 
 
 def test_node_default_canvas_preset_is_visible_clean_and_resolvable() -> None:

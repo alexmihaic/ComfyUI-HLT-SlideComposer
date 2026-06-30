@@ -7,6 +7,12 @@ from dataclasses import dataclass
 
 from PIL import Image, ImageDraw
 
+from .adaptive_mosaic import (
+    AdaptiveMosaicSettings,
+    MosaicCandidate,
+    SourceImageInfo,
+    select_adaptive_mosaic,
+)
 from .color_utils import parse_color
 from .config import CanvasSize, Rect, resolve_canvas_size
 from .exceptions import HLTSlideError, prefixed_message
@@ -133,6 +139,140 @@ def render_vertical_stack(
             effective_layout=effective_layout,
         )
     return output.convert("RGB")
+
+
+def render_adaptive_mosaic(
+    items: list[SlideItem] | tuple[SlideItem, ...],
+    *,
+    title: str = "",
+    canvas_size: CanvasSize | None = CanvasSize(1080, 1920),
+    settings: RenderSettings | None = None,
+    background_image: Image.Image | None = None,
+    logo_image: Image.Image | None = None,
+    logo_mask: Image.Image | None = None,
+    adaptive_settings: AdaptiveMosaicSettings | None = None,
+) -> Image.Image:
+    render_settings = settings or RenderSettings()
+    canvas_size = _resolve_canvas_size(canvas_size, render_settings, background_image)
+    active_items = _active_items(items, "adaptive_mosaic")
+    layout, candidate = measure_adaptive_mosaic_layout(
+        active_items,
+        title=title,
+        canvas_size=canvas_size,
+        settings=render_settings,
+        logo_image=logo_image,
+        adaptive_settings=adaptive_settings,
+    )
+
+    output = _draw_background(canvas_size, render_settings, background_image)
+    output = _draw_adaptive_images(output, active_items, layout, render_settings)
+    output = _draw_title(output, title, layout, render_settings)
+    output = _draw_labels(output, active_items, layout, render_settings)
+    output = _draw_logo(output, canvas_size, layout, render_settings, logo_image, logo_mask)
+    if render_settings.debug_layout:
+        _draw_debug(
+            output,
+            layout,
+            canvas_size,
+            render_settings,
+            logo_image,
+            logo_mask,
+            effective_layout="adaptive_mosaic",
+            candidate=candidate,
+            strategy=(adaptive_settings or AdaptiveMosaicSettings()).strategy,
+            hero=_adaptive_debug_hero(adaptive_settings),
+        )
+    return output.convert("RGB")
+
+
+def measure_adaptive_mosaic_layout(
+    items: list[SlideItem] | tuple[SlideItem, ...],
+    *,
+    title: str = "",
+    canvas_size: CanvasSize = CanvasSize(1080, 1920),
+    settings: RenderSettings | None = None,
+    logo_image: Image.Image | None = None,
+    adaptive_settings: AdaptiveMosaicSettings | None = None,
+) -> tuple[SlideLayout, MosaicCandidate]:
+    render_settings = settings or RenderSettings()
+    active_items = _active_items(items, "adaptive_mosaic")
+    mosaic_settings = _adaptive_settings_from_render_settings(
+        render_settings,
+        adaptive_settings,
+        canvas_size,
+    )
+    sources = _source_infos(active_items)
+    title_fit = _measure_title(
+        title,
+        render_settings,
+        _content_width(canvas_size, render_settings),
+    )
+    footer_height = _resolved_footer_height(canvas_size, render_settings, logo_image)
+    reserve_footer = render_settings.reserve_footer or logo_image is not None
+    title_rect, footer_rect, content_rect = _adaptive_content_rects(
+        canvas_size,
+        render_settings,
+        title_height=title_fit.height if title_fit is not None else 0,
+        footer_height=footer_height,
+        reserve_footer=reserve_footer,
+    )
+    label_heights = tuple(
+        mosaic_settings.label_min_height if item.label.strip() else 0
+        for item in active_items
+    )
+    layout: SlideLayout | None = None
+    candidate: MosaicCandidate | None = None
+    for _iteration in range(3):
+        layout, candidate = select_adaptive_mosaic(
+            canvas_size,
+            sources,
+            mosaic_settings,
+            content_rect=content_rect,
+            title_rect=title_rect,
+            footer_rect=footer_rect,
+            label_heights=label_heights,
+        )
+        measured = _measure_candidate_label_heights(
+            active_items,
+            layout,
+            render_settings,
+        )
+        if measured == label_heights:
+            break
+        label_heights = measured
+    if layout is None or candidate is None:
+        raise HLTSlideError(prefixed_message("adaptive_mosaic could not produce a layout."))
+    return layout, candidate
+
+
+def _active_items(
+    items: list[SlideItem] | tuple[SlideItem, ...],
+    layout_name: str,
+) -> tuple[SlideItem, ...]:
+    active_items = tuple(item for item in items if item.image is not None)
+    if not active_items:
+        raise HLTSlideError(prefixed_message(f"{layout_name} requires image_1."))
+    if len(active_items) > 4:
+        raise HLTSlideError(prefixed_message(f"{layout_name} supports at most 4 images."))
+    for index, item in enumerate(active_items, start=1):
+        if item.image.width < 1 or item.image.height < 1:
+            raise HLTSlideError(
+                prefixed_message(f"adaptive_mosaic image {index} has invalid dimensions.")
+            )
+    return active_items
+
+
+def _source_infos(items: tuple[SlideItem, ...]) -> tuple[SourceImageInfo, ...]:
+    return tuple(
+        SourceImageInfo(
+            index=index,
+            width=item.image.width,
+            height=item.image.height,
+            aspect_ratio=item.image.width / item.image.height,
+            has_label=bool(item.label.strip()),
+        )
+        for index, item in enumerate(items)
+    )
 
 
 def _resolve_layout(requested_layout: str, active_image_count: int) -> str:
@@ -287,6 +427,107 @@ def _label_measure_widths(
     return (column_width, column_width, column_width, column_width)
 
 
+def _adaptive_settings_from_render_settings(
+    settings: RenderSettings,
+    adaptive_settings: AdaptiveMosaicSettings | None,
+    canvas_size: CanvasSize,
+) -> AdaptiveMosaicSettings:
+    base = adaptive_settings or AdaptiveMosaicSettings()
+    return AdaptiveMosaicSettings(
+        strategy=base.strategy,
+        preserve_order=base.preserve_order,
+        preserve_aspect=True,
+        hero_index=base.hero_index,
+        gap=settings.inner_padding if adaptive_settings is None else base.gap,
+        minimum_image_width=max(24, round(canvas_size.width * 0.08)),
+        minimum_image_height=max(24, round(canvas_size.height * 0.05)),
+        label_padding_top=settings.label_padding_top,
+        label_padding_bottom=settings.label_padding_bottom,
+        label_after_gap=base.label_after_gap if adaptive_settings is not None else settings.label_after_gap,
+        label_min_height=settings.label_min_height,
+        footer_height=0,
+        footer_gap=0,
+    )
+
+
+def _content_width(canvas_size: CanvasSize, settings: RenderSettings) -> int:
+    scale = canvas_size.width / 1080.0
+    return max(1, canvas_size.width - (2 * _scaled(settings.outer_margin, scale)))
+
+
+def _adaptive_content_rects(
+    canvas_size: CanvasSize,
+    settings: RenderSettings,
+    *,
+    title_height: int,
+    footer_height: int,
+    reserve_footer: bool,
+) -> tuple[Rect | None, Rect | None, Rect]:
+    scale = canvas_size.width / 1080.0
+    outer_margin = _scaled(settings.outer_margin, scale)
+    top_margin = _scaled(settings.top_margin, scale)
+    bottom_margin = _scaled(settings.bottom_margin, scale)
+    title_gap = _scaled(settings.title_gap, scale)
+    content_width = max(1, canvas_size.width - (2 * outer_margin))
+
+    y = top_margin
+    title_rect = None
+    if title_height > 0:
+        title_rect = Rect(outer_margin, y, content_width, title_height)
+        y = title_rect.bottom + title_gap
+
+    footer_rect = None
+    content_bottom = canvas_size.height - bottom_margin
+    if reserve_footer and footer_height > 0:
+        footer_rect = Rect(
+            outer_margin,
+            canvas_size.height - bottom_margin - footer_height,
+            content_width,
+            footer_height,
+        )
+        content_bottom = footer_rect.y - bottom_margin
+
+    content_height = content_bottom - y
+    if content_height < 1:
+        raise HLTSlideError(
+            prefixed_message(
+                "adaptive_mosaic overflow: title, footer and margins leave no content area."
+            )
+        )
+    return title_rect, footer_rect, Rect(outer_margin, y, content_width, content_height)
+
+
+def _measure_candidate_label_heights(
+    items: tuple[SlideItem, ...],
+    layout: SlideLayout,
+    settings: RenderSettings,
+) -> tuple[int, ...]:
+    heights: list[int] = []
+    for item, block in zip(items, layout.blocks):
+        if not item.label.strip() or block.label_rect is None:
+            heights.append(0)
+            continue
+        max_width = max(1, block.label_rect.width)
+        fitted = fit_text(
+            item.label,
+            font_path=settings.font_path,
+            preferred_size=settings.label_font_size,
+            minimum_size=settings.minimum_font_size,
+            max_width=max_width,
+            max_height=180,
+            max_lines=settings.max_label_lines,
+            line_spacing=settings.line_spacing,
+            uppercase=settings.uppercase_labels,
+        )
+        if fitted.was_truncated:
+            warnings.warn(
+                prefixed_message(f"La etiqueta {len(heights) + 1} ha sido truncada."),
+                stacklevel=3,
+            )
+        heights.append(_reserved_label_height(fitted, settings))
+    return tuple(heights)
+
+
 def _reserved_label_height(fitted: FittedText | None, settings: RenderSettings) -> int:
     if fitted is None:
         return 0
@@ -312,6 +553,30 @@ def _draw_images(
             fit=settings.image_fit,
             crop_anchor=settings.crop_anchor,
             contain_fill_mode=settings.contain_fill_mode,
+            cell_background_color=parse_color(settings.cell_background_color),
+            corner_radius=_scaled(settings.corner_radius, scale),
+            border_width=_scaled(settings.border_width, scale),
+            border_color=parse_color(settings.border_color),
+        )
+    return result
+
+
+def _draw_adaptive_images(
+    output: Image.Image,
+    items: tuple[SlideItem, ...],
+    layout: SlideLayout,
+    settings: RenderSettings,
+) -> Image.Image:
+    result = output
+    scale = output.width / 1080.0
+    for item, block in zip(items, layout.blocks):
+        result = compose_image_in_rect(
+            result,
+            item.image,
+            block.image_rect,
+            fit="contain",
+            crop_anchor="center",
+            contain_fill_mode="transparent",
             cell_background_color=parse_color(settings.cell_background_color),
             corner_radius=_scaled(settings.corner_radius, scale),
             border_width=_scaled(settings.border_width, scale),
@@ -460,9 +725,14 @@ def _draw_debug(
     logo_mask: Image.Image | None,
     *,
     effective_layout: str,
+    candidate: MosaicCandidate | None = None,
+    strategy: str | None = None,
+    hero: str | None = None,
 ) -> None:
     draw = ImageDraw.Draw(output)
     draw.text((8, 8), f"LAYOUT: {effective_layout.upper()}", fill=(255, 255, 0))
+    if candidate is not None:
+        _draw_adaptive_debug_text(draw, candidate, strategy, hero)
     if layout.title_rect is not None:
         _debug_rect(draw, layout.title_rect, "TITLE", (255, 255, 0))
     for index, block in enumerate(layout.blocks, start=1):
@@ -489,6 +759,35 @@ def _draw_debug(
 def _debug_rect(draw: ImageDraw.ImageDraw, rect: Rect, label: str, color: tuple[int, int, int]) -> None:
     draw.rectangle((rect.x, rect.y, rect.right - 1, rect.bottom - 1), outline=color, width=2)
     draw.text((rect.x + 4, rect.y + 4), f"{label} {rect.width}x{rect.height}", fill=color)
+
+
+def _draw_adaptive_debug_text(
+    draw: ImageDraw.ImageDraw,
+    candidate: MosaicCandidate,
+    strategy: str | None,
+    hero: str | None,
+) -> None:
+    diagnostics = candidate.diagnostics
+    lines = (
+        f"TEMPLATE: {candidate.template_name}",
+        f"STRATEGY: {(strategy or '').upper()}",
+        f"HERO: {hero or 'AUTO'}",
+        f"SCORE: {candidate.score:.1f}",
+        f"UNUSED AREA: {diagnostics.get('unused_area_percentage', 0):.1f}%",
+        f"unused_area: {candidate.penalties['unused_area']:.1f}",
+        f"tiny_cells: {candidate.penalties['tiny_cells']:.1f}",
+        f"visual_imbalance: {candidate.penalties['visual_imbalance']:.1f}",
+        f"extreme_size_difference: {candidate.penalties['extreme_size_difference']:.1f}",
+        f"label_overflow: {candidate.penalties['label_overflow']:.1f}",
+    )
+    for index, line in enumerate(lines, start=1):
+        draw.text((8, 8 + (index * 12)), line, fill=(255, 255, 0))
+
+
+def _adaptive_debug_hero(settings: AdaptiveMosaicSettings | None) -> str:
+    if settings is None or settings.hero_index is None:
+        return "AUTO"
+    return f"IMAGE {settings.hero_index + 1}"
 
 
 def _scaled(value: int, scale: float) -> int:

@@ -183,6 +183,28 @@ def main() -> int:
     )[0]
     assert_image_tensor(four_auto, (160, 240))
 
+    adaptive = node.compose(
+        **kwargs(
+            layout="adaptive_mosaic",
+            adaptive_strategy="balanced",
+            adaptive_hero="auto",
+            image_1=image((1.0, 0.0, 0.0), size=(40, 40)),
+            image_2=image((0.0, 1.0, 0.0), size=(64, 36)),
+            image_3=image((0.0, 0.0, 1.0), size=(36, 48)),
+            image_4=image((1.0, 1.0, 0.0), size=(36, 64)),
+            label_1="SQUARE",
+            label_2="LANDSCAPE",
+            label_3="PORTRAIT",
+            label_4="TALL",
+            background_mode="image_with_overlay",
+            background_image=image((0.2, 0.3, 0.5), size=(160, 240)),
+            overlay_opacity=0.25,
+            logo_image=image((1.0, 0.0, 0.0), size=(40, 20)),
+            logo_mask=mask(size=(40, 20)),
+        )
+    )[0]
+    assert_image_tensor(adaptive, (160, 240))
+
     print("HLT Comfy node integration validation OK")
     return 0
 
