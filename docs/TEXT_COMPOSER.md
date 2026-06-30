@@ -53,12 +53,13 @@ La línea v0.3.0 está prevista como primera versión experimental del Text Comp
 - Plan de medición `measure_text_composition`.
 - Render final RGB `render_text_composition`.
 - Script de renders tipográficos reales.
+- Nodo experimental `HLT · Text Composer` registrado en la rama `feat/text-composer-v0.3`.
+- Workflow experimental autocontenido sin assets externos.
 
 ## Pendiente
 
-- No existe todavía un nodo instalable `HLT · Text Composer`.
-- No se registra `HLTTextComposer` en `NODE_CLASS_MAPPINGS`.
-- No hay workflow de ComfyUI para Text Composer.
+- No está publicado en `main`.
+- No forma parte de una release.
 - No hay presets de estilo.
 
 ## Decisions made in Phase 9A
@@ -102,3 +103,28 @@ La línea v0.3.0 está prevista como primera versión experimental del Text Comp
 - Workflow público.
 - Compatibilidad de widget-to-input.
 - Estrategia de registro junto a `HLTSlideComposer`.
+
+## Decisions made in Phase 9C
+
+- El nodo expone cuatro `STRING` multilínea visibles.
+- No usa frontend personalizado, `forceInput` ni JavaScript.
+- La salida pública inicial es un único `IMAGE`.
+- Los cuatro roles por defecto son `headline`.
+- `preserve_words` queda activo por defecto.
+- `accent_target` queda en `none` por defecto.
+- `reserve_logo_space` queda activo por defecto.
+- El contrato inicial de widgets queda congelado para workflows v0.3.0 experimentales.
+- La integración vive junto a `HLTSlideComposer` en `nodes.py`.
+- El workflow experimental no usa assets externos.
+
+## Open decisions for Phase 9D
+
+- Prueba manual en ComfyUI.
+- Revisión del tamaño visual del nodo.
+- Save/load del workflow.
+- Conversión manual widget-to-input.
+- README público.
+- Assets públicos.
+- Versionado `0.3.0`.
+- PR.
+- Release.

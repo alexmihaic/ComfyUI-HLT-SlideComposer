@@ -294,11 +294,14 @@ def test_render_is_deterministic_and_slide_composer_contract_unchanged() -> None
     node_module = importlib.import_module("nodes")
 
     assert first.tobytes() == second.tobytes()
-    assert node_module.NODE_CLASS_MAPPINGS == {"HLTSlideComposer": node_module.HLTSlideComposer}
-    assert node_module.NODE_DISPLAY_NAME_MAPPINGS == {
-        "HLTSlideComposer": "HLT · Slide Composer"
+    assert node_module.NODE_CLASS_MAPPINGS == {
+        "HLTSlideComposer": node_module.HLTSlideComposer,
+        "HLTTextComposer": node_module.HLTTextComposer,
     }
-    assert not hasattr(node_module, "HLTTextComposer")
+    assert node_module.NODE_DISPLAY_NAME_MAPPINGS == {
+        "HLTSlideComposer": "HLT · Slide Composer",
+        "HLTTextComposer": "HLT · Text Composer",
+    }
 
 
 def test_logo_reserve_changes_geometry_and_mask_is_accepted() -> None:

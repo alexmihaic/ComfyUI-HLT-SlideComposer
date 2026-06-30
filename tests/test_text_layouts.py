@@ -231,11 +231,12 @@ def test_describe_text_layout_is_readable_and_deterministic() -> None:
     assert "roles=('headline', 'caption')" in first
 
 
-def test_slide_composer_contract_is_unchanged_and_text_composer_is_not_registered() -> None:
+def test_slide_composer_contract_is_unchanged_with_text_composer_registered() -> None:
     node_module = importlib.import_module("nodes")
 
-    assert node_module.NODE_CLASS_MAPPINGS == {"HLTSlideComposer": node_module.HLTSlideComposer}
+    assert node_module.NODE_CLASS_MAPPINGS["HLTSlideComposer"] is node_module.HLTSlideComposer
+    assert node_module.NODE_CLASS_MAPPINGS["HLTTextComposer"] is node_module.HLTTextComposer
     assert node_module.NODE_DISPLAY_NAME_MAPPINGS == {
-        "HLTSlideComposer": "HLT · Slide Composer"
+        "HLTSlideComposer": "HLT · Slide Composer",
+        "HLTTextComposer": "HLT · Text Composer",
     }
-    assert not hasattr(node_module, "HLTTextComposer")

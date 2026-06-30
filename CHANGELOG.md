@@ -12,6 +12,9 @@ All notable changes to this project are documented in this file.
 - Calibrated Text Composer typography to use the largest fitting role size.
 - Preserved complete words during Text Composer wrapping.
 - Changed future Text Composer default roles to four headlines.
+- Registered the experimental `HLT · Text Composer` ComfyUI node.
+- Added a self-contained experimental Text Composer workflow.
+- Added ComfyUI contract, execution and package-discovery validation for the second node.
 
 ## 0.2.0 - 2026-06-30
 

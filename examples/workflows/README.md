@@ -4,6 +4,7 @@
 
 - `hlt-slide-composer-grid-4-images.json`
 - `hlt-slide-composer-adaptive-mosaic.json`
+- `hlt-text-composer-v0.3-experimental.json`
 
 This workflow was exported from ComfyUI and uses:
 
@@ -26,6 +27,11 @@ The adaptive workflow uses:
 - `adaptive_hero = auto`.
 
 The image file names stored inside the workflow are local example names only. Users must select their own local images in the `Load Image` nodes after loading the workflow.
+
+The Text Composer workflow is experimental for the `feat/text-composer-v0.3`
+branch. It uses only `HLT · Text Composer` and `SaveImage`, with no external
+image assets. It is intended for manual ComfyUI validation before a public
+release.
 
 ## Publication Rules
 

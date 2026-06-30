@@ -146,9 +146,12 @@ El debug es determinista y está pensado para inspección técnica.
 
 ## Limitaciones
 
-- No registra todavía `HLTTextComposer`.
-- No hay integración ComfyUI.
+- La integración ComfyUI existe solo en la rama experimental.
 - No hay controles por bloque para color o alineación.
 - No hay presets visuales.
 - No hay familias de fuente por rol, tracking, kerning manual ni fuentes embebidas.
 - No hay resaltado parcial de palabras.
+
+## Integración experimental
+
+Desde Phase 9C, el renderer se usa desde `HLTTextComposer` en `nodes.py`. La integración sigue siendo experimental en la rama `feat/text-composer-v0.3`; no está publicada en `main` ni en una release.

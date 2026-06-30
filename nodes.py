@@ -15,7 +15,7 @@ if __package__:
         CanvasSize,
         RESOLUTION_PRESETS,
     )
-    from .hlt_slide.exceptions import prefixed_message
+    from .hlt_slide.exceptions import HLTSlideError, prefixed_message
     from .hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
     from .hlt_slide.renderer import (
         RenderSettings,
@@ -30,6 +30,12 @@ if __package__:
         tensor_like_to_numpy,
         torch_from_numpy_image,
     )
+    from .hlt_slide.text_layouts import TEXT_LAYOUT_NAMES, TEXT_ROLES, TextLayoutSettings
+    from .hlt_slide.text_renderer import (
+        TEXT_COMPOSER_WARNING_PREFIX,
+        TextRenderSettings,
+        render_text_composition,
+    )
 else:
     from hlt_slide.config import (
         BACKGROUND_SIZE_PRESET_NAME,
@@ -37,7 +43,7 @@ else:
         CanvasSize,
         RESOLUTION_PRESETS,
     )
-    from hlt_slide.exceptions import prefixed_message
+    from hlt_slide.exceptions import HLTSlideError, prefixed_message
     from hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
     from hlt_slide.renderer import (
         RenderSettings,
@@ -52,10 +58,18 @@ else:
         tensor_like_to_numpy,
         torch_from_numpy_image,
     )
+    from hlt_slide.text_layouts import TEXT_LAYOUT_NAMES, TEXT_ROLES, TextLayoutSettings
+    from hlt_slide.text_renderer import (
+        TEXT_COMPOSER_WARNING_PREFIX,
+        TextRenderSettings,
+        render_text_composition,
+    )
 
 
 NODE_NAME = "HLTSlideComposer"
 NODE_DISPLAY_NAME = "HLT · Slide Composer"
+TEXT_NODE_NAME = "HLTTextComposer"
+TEXT_NODE_DISPLAY_NAME = "HLT · Text Composer"
 NODE_CATEGORY = "HLT / Composition"
 
 
@@ -293,6 +307,172 @@ class HLTSlideComposer:
         return (torch_from_numpy_image(pillow_to_bhwc_numpy(rendered)),)
 
 
+class HLTTextComposer:
+    """Thin ComfyUI node wrapper around the experimental text renderer."""
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("design",)
+    FUNCTION = "compose"
+    CATEGORY = NODE_CATEGORY
+
+    @classmethod
+    def INPUT_TYPES(cls) -> dict[str, dict[str, Any]]:
+        preset_names = tuple(preset.name for preset in RESOLUTION_PRESETS)
+        role_names = tuple(TEXT_ROLES)
+        return {
+            "required": {
+                "text_1": ("STRING", {"default": "YOUR TEXT", "multiline": True}),
+                "text_2": ("STRING", {"default": "", "multiline": True}),
+                "text_3": ("STRING", {"default": "", "multiline": True}),
+                "text_4": ("STRING", {"default": "", "multiline": True}),
+                "canvas_preset": (preset_names, {"default": "9:16 Social · 1080x1920"}),
+                "custom_width": ("INT", {"default": 1080, "min": 1, "max": 8192, "step": 1}),
+                "custom_height": ("INT", {"default": 1920, "min": 1, "max": 8192, "step": 1}),
+                "layout": (tuple(TEXT_LAYOUT_NAMES), {"default": "auto_text"}),
+                "text_1_role": (role_names, {"default": "headline"}),
+                "text_2_role": (role_names, {"default": "headline"}),
+                "text_3_role": (role_names, {"default": "headline"}),
+                "text_4_role": (role_names, {"default": "headline"}),
+                "split_axis": (("auto", "horizontal", "vertical"), {"default": "auto"}),
+                "background_mode": (("solid", "image", "image_with_overlay"), {"default": "solid"}),
+                "background_color": ("STRING", {"default": "#000000"}),
+                "background_fit": (("cover", "contain", "stretch"), {"default": "cover"}),
+                "background_opacity": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "overlay_opacity": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "text_color": ("STRING", {"default": "#F3F0E8"}),
+                "accent_color": ("STRING", {"default": "#E92124"}),
+                "accent_target": (("none", "first_active", "text_1", "text_2", "text_3", "text_4"), {"default": "none"}),
+                "font_path": ("STRING", {"default": ""}),
+                "font_scale": ("FLOAT", {"default": 1.0, "min": 0.25, "max": 4.0, "step": 0.05}),
+                "horizontal_align": (("auto", "left", "center", "right"), {"default": "auto"}),
+                "vertical_align": (("auto", "top", "center", "bottom"), {"default": "auto"}),
+                "uppercase": ("BOOLEAN", {"default": False}),
+                "preserve_words": ("BOOLEAN", {"default": True}),
+                "clipping": ("BOOLEAN", {"default": True}),
+                "outer_margin": ("INT", {"default": 64, "min": 0, "max": 600, "step": 1}),
+                "top_margin": ("INT", {"default": 60, "min": 0, "max": 600, "step": 1}),
+                "bottom_margin": ("INT", {"default": 54, "min": 0, "max": 600, "step": 1}),
+                "block_gap": ("INT", {"default": 30, "min": 0, "max": 400, "step": 1}),
+                "inner_padding": ("INT", {"default": 30, "min": 0, "max": 400, "step": 1}),
+                "logo_width_percent": ("FLOAT", {"default": 18.0, "min": 0.0, "max": 100.0, "step": 0.5}),
+                "logo_max_height_percent": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step": 0.5}),
+                "logo_opacity": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "logo_bottom_offset": ("INT", {"default": 0, "min": -400, "max": 400, "step": 1}),
+                "invert_logo_mask": ("BOOLEAN", {"default": True}),
+                "reserve_logo_space": ("BOOLEAN", {"default": True}),
+                "logo_gap": ("INT", {"default": 24, "min": 0, "max": 400, "step": 1}),
+                "debug_layout": ("BOOLEAN", {"default": False}),
+            },
+            "optional": {
+                "background_image": ("IMAGE",),
+                "logo_image": ("IMAGE",),
+                "logo_mask": ("MASK",),
+            },
+        }
+
+    def compose(
+        self,
+        text_1: str,
+        text_2: str,
+        text_3: str,
+        text_4: str,
+        canvas_preset: str,
+        custom_width: int,
+        custom_height: int,
+        layout: str,
+        text_1_role: str,
+        text_2_role: str,
+        text_3_role: str,
+        text_4_role: str,
+        split_axis: str,
+        background_mode: str,
+        background_color: str,
+        background_fit: str,
+        background_opacity: float,
+        overlay_opacity: float,
+        text_color: str,
+        accent_color: str,
+        accent_target: str,
+        font_path: str,
+        font_scale: float,
+        horizontal_align: str,
+        vertical_align: str,
+        uppercase: bool,
+        preserve_words: bool,
+        clipping: bool,
+        outer_margin: int,
+        top_margin: int,
+        bottom_margin: int,
+        block_gap: int,
+        inner_padding: int,
+        logo_width_percent: float,
+        logo_max_height_percent: float,
+        logo_opacity: float,
+        logo_bottom_offset: int,
+        invert_logo_mask: bool,
+        reserve_logo_space: bool,
+        logo_gap: int,
+        debug_layout: bool,
+        background_image: Any | None = None,
+        logo_image: Any | None = None,
+        logo_mask: Any | None = None,
+    ) -> tuple[Any]:
+        try:
+            layout_settings = TextLayoutSettings(
+                outer_margin=outer_margin,
+                top_margin=top_margin,
+                bottom_margin=bottom_margin,
+                block_gap=block_gap,
+                inner_padding=inner_padding,
+                minimum_block_width=24,
+                minimum_block_height=24,
+                split_axis=split_axis,
+            )
+            settings = TextRenderSettings(
+                canvas_preset=canvas_preset,
+                custom_width=custom_width,
+                custom_height=custom_height,
+                layout=layout,
+                layout_settings=layout_settings,
+                background_mode=background_mode,
+                background_color=background_color,
+                background_fit=background_fit,
+                background_opacity=background_opacity,
+                overlay_opacity=overlay_opacity,
+                font_path=font_path.strip() or None,
+                font_scale=font_scale,
+                text_color=text_color,
+                accent_color=accent_color,
+                accent_target=accent_target,
+                horizontal_align=horizontal_align,
+                vertical_align=vertical_align,
+                uppercase=uppercase,
+                clipping=clipping,
+                break_long_words=not preserve_words,
+                warn_on_truncation=True,
+                logo_width_percent=logo_width_percent,
+                logo_max_height_percent=logo_max_height_percent,
+                logo_opacity=logo_opacity,
+                logo_bottom_offset=logo_bottom_offset,
+                invert_logo_mask=invert_logo_mask,
+                reserve_logo_space=reserve_logo_space,
+                logo_gap=logo_gap,
+                debug_layout=debug_layout,
+            )
+            rendered = render_text_composition(
+                (text_1, text_2, text_3, text_4),
+                roles=(text_1_role, text_2_role, text_3_role, text_4_role),
+                canvas_size=_node_canvas_size(canvas_preset, custom_width, custom_height),
+                settings=settings,
+                background_image=_optional_text_image_tensor_to_pillow(background_image, "background_image"),
+                logo_image=_optional_text_image_tensor_to_pillow(logo_image, "logo_image"),
+                logo_mask=_optional_text_mask_tensor_to_pillow(logo_mask, "logo_mask"),
+            )
+            return (torch_from_numpy_image(pillow_to_bhwc_numpy(rendered)),)
+        except Exception as error:
+            raise _text_composer_error(error) from error
+
+
 def _node_canvas_size(
     canvas_preset: str,
     custom_width: int,
@@ -380,10 +560,54 @@ def _warn_if_batched(name: str, batch_size: int) -> None:
         )
 
 
+def _optional_text_image_tensor_to_pillow(tensor_like: Any | None, name: str) -> Image.Image | None:
+    if tensor_like is None:
+        return None
+    return _text_image_tensor_to_pillow(tensor_like, name)
+
+
+def _text_image_tensor_to_pillow(tensor_like: Any, name: str) -> Image.Image:
+    array = tensor_like_to_numpy(tensor_like)
+    _text_warn_if_batched(name, array.shape[0])
+    return numpy_to_pillow(array[0])
+
+
+def _optional_text_mask_tensor_to_pillow(tensor_like: Any | None, name: str) -> Image.Image | None:
+    if tensor_like is None:
+        return None
+    array = _tensor_like_to_array(tensor_like)
+    if array.ndim >= 3:
+        _text_warn_if_batched(name, int(array.shape[0]))
+    return mask_like_to_pillow(tensor_like)
+
+
+def _text_warn_if_batched(name: str, batch_size: int) -> None:
+    if batch_size > 1:
+        warnings.warn(
+            f"{TEXT_COMPOSER_WARNING_PREFIX} {name} batch contains {batch_size} frames; using the first frame.",
+            stacklevel=3,
+        )
+
+
+def _text_composer_error(error: Exception) -> Exception:
+    message = str(error)
+    if message.startswith(TEXT_COMPOSER_WARNING_PREFIX):
+        return error
+    if message.startswith("[HLT Slide Composer] "):
+        message = message.replace("[HLT Slide Composer]", TEXT_COMPOSER_WARNING_PREFIX, 1)
+    elif not message.startswith(TEXT_COMPOSER_WARNING_PREFIX):
+        message = f"{TEXT_COMPOSER_WARNING_PREFIX} {message}"
+    if isinstance(error, HLTSlideError):
+        return HLTSlideError(message)
+    return ValueError(message)
+
+
 NODE_CLASS_MAPPINGS = {
     NODE_NAME: HLTSlideComposer,
+    TEXT_NODE_NAME: HLTTextComposer,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     NODE_NAME: NODE_DISPLAY_NAME,
+    TEXT_NODE_NAME: TEXT_NODE_DISPLAY_NAME,
 }

@@ -123,3 +123,16 @@ Esta API sigue siendo interna hasta Phase 9C.
 ## Phase 9B.1 calibration
 
 Los defaults internos del futuro Text Composer son cuatro `headline` para evitar jerarquías accidentales en composiciones generales. El renderer conserva palabras completas por defecto y aplica una estrategia largest-fit por rol. `text_engine.fit_text` mantiene compatibilidad con Slide Composer mediante `break_long_words=True` como valor predeterminado; Text Composer usa `break_long_words=False`.
+
+## Phase 9C ComfyUI contract
+
+`HLTTextComposer` queda registrado en la rama experimental con:
+
+```text
+RETURN_TYPES = ("IMAGE",)
+RETURN_NAMES = ("design",)
+FUNCTION = "compose"
+CATEGORY = "HLT / Composition"
+```
+
+El orden de widgets queda congelado para workflows experimentales v0.3.0. El nodo usa cuatro widgets `STRING` multilínea, roles visibles, fondo, colores, alineación, espaciado, logo y debug. No expone todavía tamaños por rol, métricas internas ni presets visuales.
