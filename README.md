@@ -16,7 +16,7 @@ The node appears under:
 HLT / Composition
 ```
 
-Current prepared release: `v0.1.0`.
+Current prepared release: `v0.2.0`.
 
 It outputs a standard ComfyUI `IMAGE` tensor.
 
@@ -34,12 +34,17 @@ It outputs a standard ComfyUI `IMAGE` tensor.
 
 ![Vertical example](docs/assets/readme/vertical-example.png)
 
+### Adaptive mosaic
+
+![Adaptive mosaic example](docs/assets/readme/adaptive-mosaic-example.png)
+
 ## Features
 
 - 1-4 content images.
 - `vertical_stack` layout.
 - `grid_2x2` layout.
 - `auto_social` layout selector.
+- `adaptive_mosaic` layout for mixed aspect ratios.
 - 9:16, 4:5, 3:4, square and custom canvas sizes.
 - Solid or image background.
 - Overlay opacity.
@@ -51,6 +56,8 @@ It outputs a standard ComfyUI `IMAGE` tensor.
 - Label spacing.
 - Vertical label alignment.
 - Label clipping.
+- Adaptive strategies: `balanced`, `editorial` and `compact`.
+- Automatic or explicit adaptive hero selection.
 - Standard ComfyUI `IMAGE` output: `[1, H, W, 3]`, `float32`, range `0.0-1.0`.
 - Pure Pillow renderer, kept separate from the ComfyUI adapter.
 
@@ -83,7 +90,8 @@ Do not reinstall Torch for this node. If Pillow or NumPy are missing from your C
 
 ```powershell
 cd "PATH_TO_COMFYUI\ComfyUI\custom_nodes\ComfyUI-HLT-SlideComposer"
-git pull origin main
+git switch main
+git pull --ff-only origin main
 ```
 
 Restart ComfyUI after updating.
@@ -130,9 +138,11 @@ auto_social -> grid_2x2
 
 ## Example Workflow
 
-Example workflow:
+Example workflows:
 
 [examples/workflows/hlt-slide-composer-grid-4-images.json](examples/workflows/hlt-slide-composer-grid-4-images.json)
+
+[examples/workflows/hlt-slide-composer-adaptive-mosaic.json](examples/workflows/hlt-slide-composer-adaptive-mosaic.json)
 
 How to use it:
 
@@ -145,8 +155,9 @@ How to use it:
 
 Notes:
 
-- The workflow uses four content images.
-- It is prepared for `auto_social`, which resolves to `grid_2x2` with four images.
+- The grid workflow uses four content images.
+- The adaptive workflow uses `adaptive_mosaic`, `balanced` strategy and `adaptive_hero=auto`.
+- `auto_social` resolves to `grid_2x2` with four images and does not select `adaptive_mosaic`.
 - Background and logo are replaceable.
 - Logo and mask are optional.
 - The repository does not distribute the original images referenced by the `Load Image` nodes.
@@ -158,11 +169,35 @@ Notes:
 | `vertical_stack` | One column, 1-4 active images, useful for stories and process slides. |
 | `grid_2x2` | Grid behavior for 1-4 images; with four images it creates a regular 2 x 2 slide. |
 | `auto_social` | Uses `vertical_stack` for 1-3 images and `grid_2x2` for 4 images. |
+| `adaptive_mosaic` | Scores several proportional layouts for mixed portrait, landscape and square images. |
+
+## Adaptive Mosaic
+
+Use:
+
+```text
+layout = adaptive_mosaic
+adaptive_strategy = balanced | editorial | compact
+adaptive_hero = auto | image_1 | image_2 | image_3 | image_4
+```
+
+`balanced` prioritizes readability, visual balance and reasonable image sizes.
+`editorial` allows one image to become dominant. `compact` prioritizes lower
+empty area.
+
+Adaptive mosaic preserves source aspect ratio. It does not crop or stretch
+images; it uses transparent containment, so the slide background can remain
+visible. Hero selection is geometric rather than semantic. If an explicit hero
+points to a disconnected image, the node emits a warning and falls back to
+`auto`.
+
+Technical details: [docs/ADAPTIVE_MOSAIC.md](docs/ADAPTIVE_MOSAIC.md)
 
 ## Main Controls
 
 - `canvas_preset`, `custom_width`, `custom_height`
 - `layout`
+- `adaptive_strategy`, `adaptive_hero`
 - `background_mode`, `background_color`, `background_fit`, `background_opacity`, `overlay_opacity`
 - `title`, `label_1`, `label_2`, `label_3`, `label_4`
 - `title_color`, `label_color`
@@ -194,7 +229,8 @@ Other versions may work, but they have not been verified yet.
 
 - Maximum of four images.
 - Only the first frame of each batch is used.
-- No adaptive mosaic yet.
+- `adaptive_mosaic` hero selection is geometric, not semantic.
+- `adaptive_mosaic` may leave background visible while preserving aspect ratios.
 - No background blur.
 - No custom frontend.
 - Example workflows require local images.
@@ -202,16 +238,8 @@ Other versions may work, but they have not been verified yet.
 
 ## Roadmap
 
-Planned for `v0.2.0` exploration:
-
-- `adaptive_mosaic`;
-- automatic aspect-ratio preservation;
-- justified rows;
-- hero layouts;
-- automatic template selection;
-- better layout handling for mixed portrait, landscape and square images.
-
-These features are not implemented in `v0.1.0`.
+Future exploration may include more layout controls, broader compatibility QA
+and companion composition tools. HLT Text Composer is not part of this release.
 
 ## Uninstall
 

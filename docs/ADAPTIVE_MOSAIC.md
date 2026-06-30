@@ -1,9 +1,15 @@
 # Adaptive Mosaic
 
-`adaptive_mosaic` es un sistema experimental para `v0.2.0`. La Fase 8A
-implemento el motor geometrico puro. La Fase 8B conecta ese motor con el
-renderer Pillow para validar resultados visuales reales, pero todavia no lo
-expone en el nodo de ComfyUI ni modifica los widgets de `v0.1.0`.
+`adaptive_mosaic` es el nuevo layout preparado para `v0.2.0`. El motor
+geometrico puro esta integrado con el renderer Pillow y expuesto en el nodo
+`HLT · Slide Composer`.
+
+Estado de preparacion:
+
+- integrado en `HLT · Slide Composer`;
+- probado manualmente por el propietario del proyecto en su instalacion real de ComfyUI;
+- validado con el Python embebido de ComfyUI;
+- preparado para publicarse en `v0.2.0`.
 
 ## Problema
 
@@ -36,10 +42,10 @@ La integracion se hace mediante funciones puras del renderer:
 
 `render_vertical_stack(...)` conserva su contrato publico.
 
-## Experimental ComfyUI integration
+## Integracion ComfyUI
 
-En Fase 8C, `adaptive_mosaic` se anade como layout experimental del nodo
-`HLT · Slide Composer`. La rama no esta fusionada en `main` y no hay release.
+En `v0.2.0`, `adaptive_mosaic` se anade como layout publico del nodo
+`HLT · Slide Composer`.
 
 Seleccion:
 
@@ -94,7 +100,7 @@ Cuando `layout == adaptive_mosaic`, el nodo llama a
 - `gap` desde `inner_padding`;
 - padding y alturas de etiqueta desde los controles existentes.
 
-No se exponen todavia pesos, tamanos minimos, plantilla manual ni controles de
+No se exponen pesos, tamanos minimos, plantilla manual ni controles de
 filas justificadas.
 
 ## Plantillas candidatas
@@ -152,7 +158,7 @@ cero en la puntuacion.
 
 ## Integracion con renderer
 
-El renderer experimental construye `SourceImageInfo` desde cada `SlideItem`:
+El renderer adaptativo construye `SourceImageInfo` desde cada `SlideItem`:
 
 - indice estable;
 - anchura y altura reales de la imagen;
@@ -182,8 +188,8 @@ El titulo y el footer se guardan en `SlideLayout`, pero quedan fuera de
 
 ## Fit efectivo en adaptive mosaic
 
-En esta fase experimental, `image_fit` global no controla las imagenes del
-layout adaptativo. El fit efectivo es siempre:
+En `adaptive_mosaic`, `image_fit` global no controla las imagenes del layout
+adaptativo. El fit efectivo es siempre:
 
 ```text
 contain + transparent
@@ -233,7 +239,8 @@ sin espacio o areas imposibles no se ocultan: reciben penalizaciones fuertes.
 - `editorial`: permite una imagen dominante y penaliza menos el desequilibrio.
 - `compact`: penaliza mas el area sin usar para favorecer ocupacion.
 
-Las estrategias son internas en esta fase.
+Las estrategias estan expuestas como widget del nodo; sus pesos y plantillas
+internas no se exponen.
 
 ## Geometria de etiquetas
 
@@ -281,7 +288,17 @@ renders reales en:
 examples/outputs/adaptive-mosaic-rendered/
 ```
 
-El debug experimental muestra:
+El script `scripts/generate_adaptive_mosaic_node_outputs.py` produce renders
+ejecutando la clase del nodo en:
+
+```text
+examples/outputs/adaptive-mosaic-node/
+```
+
+Estos directorios son salidas de QA regenerables. La release publica conserva
+solo assets seleccionados bajo `docs/assets/readme/`.
+
+El debug adaptativo muestra:
 
 - `LAYOUT: ADAPTIVE_MOSAIC`
 - `TEMPLATE`
@@ -294,20 +311,12 @@ El debug experimental muestra:
 
 ## Limitaciones
 
-- Esta expuesto solo en esta rama experimental; no esta fusionado en `main`.
+- Maximo de cuatro imagenes.
+- Validacion principal en Windows.
 - No calcula foco semantico de imagen.
-- Solo soporta de una a cuatro imagenes.
 - El comportamiento de `hero_index` es geometrico, no artistico.
 - Puede dejar bastante fondo visible cuando conservar ratios compite con
   jerarquia editorial.
-- La integracion no se ha probado manualmente dentro de la copia instalada en
-  `custom_nodes`; solo se valida desde el paquete de la rama.
-- El workflow experimental usa nombres de imagen relativos como marcadores; el
+- Usa solo el primer frame de cada batch de entrada.
+- El workflow publico usa nombres de imagen relativos como marcadores; el
   usuario debe sustituirlos por recursos locales en ComfyUI.
-
-## Pendiente para Fase 8D
-
-- validar manualmente en la copia instalada de ComfyUI;
-- revisar defaults visuales con casos reales;
-- decidir si se permite una opcion de menor area vacia aunque reduzca jerarquia;
-- decidir si se publica el layout en `main` o si se mantiene experimental mas tiempo.

@@ -1,6 +1,6 @@
-# v0.1.0 Release Checklist
+# v0.2.0 Release Checklist
 
-Use this checklist before creating the `v0.1.0` tag and GitHub Release.
+Use this checklist before creating the `v0.2.0` tag and GitHub Release.
 
 ## Automated QA
 
@@ -9,9 +9,12 @@ Use this checklist before creating the `v0.1.0` tag and GitHub Release.
 - [ ] Run `git diff --check`.
 - [ ] Run `PATH_TO_COMFYUI\python_embeded\python.exe scripts\validate_package_discovery.py`.
 - [ ] Run `PATH_TO_COMFYUI\python_embeded\python.exe scripts\validate_node_integration.py`.
+- [ ] Run `PATH_TO_COMFYUI\python_embeded\python.exe scripts\validate_adaptive_node_contract.py`.
+- [ ] Run `PATH_TO_COMFYUI\python_embeded\python.exe -m pytest tests/test_node_execution.py -q`.
 - [ ] Validate all PNG assets can be opened.
 - [ ] Validate all workflow JSON files parse successfully.
 - [ ] Validate README relative links resolve.
+- [ ] Confirm no mojibake remains in public docs or workflow JSON.
 
 ## Clean Install QA
 
@@ -26,14 +29,22 @@ Use this checklist before creating the `v0.1.0` tag and GitHub Release.
 - [ ] Test a background image with overlay.
 - [ ] Test a logo image with mask.
 - [ ] Test long labels with clipping enabled.
+- [ ] Confirm `adaptive_mosaic` is visible in the layout widget.
+- [ ] Confirm `adaptive_strategy` is visible with `balanced`, `editorial`, and `compact`.
+- [ ] Confirm `adaptive_hero` is visible with `auto` and `image_1` to `image_4`.
+- [ ] Create a four-image `adaptive_mosaic` slide.
 - [ ] Confirm output is RGB and the selected resolution is preserved.
+- [ ] Confirm manual UI test was completed by the project owner.
 
 ## Workflow QA
 
 - [ ] Reopen `examples/workflows/hlt-slide-composer-grid-4-images.json` from disk.
+- [ ] Reopen `examples/workflows/hlt-slide-composer-adaptive-mosaic.json` from disk.
 - [ ] Queue the workflow successfully.
 - [ ] Confirm no disconnected optional inputs leave visual gaps.
 - [ ] Confirm the workflow uses four content images, a background image, logo image, logo mask, `HLTSlideComposer`, and `PreviewImage`.
+- [ ] Confirm the adaptive workflow uses `adaptive_mosaic`, `balanced`, and `adaptive_hero=auto`.
+- [ ] Confirm the v0.1.0 workflow remains compatible and still uses `auto_social`.
 - [ ] Inspect JSON files for private absolute paths or sensitive data.
 
 ## Screenshot QA
@@ -52,15 +63,18 @@ Use this checklist before creating the `v0.1.0` tag and GitHub Release.
 
 ## Tag and Release
 
-- [ ] Confirm `pyproject.toml` version is `0.1.0`.
-- [ ] Confirm `hlt_slide/__init__.py` version is `0.1.0`.
-- [ ] Confirm `CHANGELOG.md` has `## 0.1.0 - 2026-06-27`.
+- [ ] Confirm `pyproject.toml` version is `0.2.0`.
+- [ ] Confirm `hlt_slide/__init__.py` version is `0.2.0`.
+- [ ] Confirm `CHANGELOG.md` has `## 0.2.0 - 2026-06-30`.
+- [ ] Confirm `docs/RELEASE_NOTES_v0.2.0.md` exists.
 - [ ] Confirm README links to the real workflow JSON.
+- [ ] Confirm public adaptive assets were reduced to selected README assets.
 - [ ] Confirm `main` is pushed.
-- [ ] Create tag: `git tag -a v0.1.0 -m "v0.1.0"`.
-- [ ] Push tag: `git push origin v0.1.0`.
-- [ ] Create GitHub Release from `v0.1.0`.
-- [ ] Paste release notes from `docs/PUBLICATION_CHECKLIST.md` or the final release notes draft.
+- [ ] Confirm clean clone verification is pending until after merge to `main`.
+- [ ] Create tag: `git tag -a v0.2.0 -m "v0.2.0"`.
+- [ ] Push tag: `git push origin v0.2.0`.
+- [ ] Create GitHub Release from `v0.2.0`.
+- [ ] Paste release notes from `docs/RELEASE_NOTES_v0.2.0.md`.
 
 ## Rollback Plan
 
