@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+### Added
+
+- Experimental pure text-layout engine for the future `HLT · Text Composer` node.
+
 ## 0.2.0 - 2026-06-30
 
 ### Added
