@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 
 try:
@@ -18,6 +19,7 @@ requires_torch = pytest.mark.skipif(
     reason="torch is required for node execution tests",
 )
 
+import nodes  # noqa: E402
 from nodes import HLTSlideComposer  # noqa: E402
 
 
@@ -370,6 +372,81 @@ def test_node_executes_adaptive_mosaic_background_overlay_logo_mask_and_debug() 
     assert output.dtype is torch.float32
     assert float(output.min()) >= 0.0
     assert float(output.max()) <= 1.0
+
+
+@requires_torch
+def test_node_executes_adaptive_mosaic_with_background_size_canvas() -> None:
+    node = HLTSlideComposer()
+    (output,) = node.compose(
+        **_compose_kwargs(
+            layout="adaptive_mosaic",
+            canvas_preset="Background size",
+            custom_width=111,
+            custom_height=222,
+            background_mode="image",
+            background_image=_image((0.2, 0.3, 0.5), size=(777, 555)),
+            image_1=_pattern_image(size=(40, 40), color=(1.0, 0.0, 0.0)),
+            image_2=_pattern_image(size=(64, 36), color=(0.0, 1.0, 0.0)),
+            label_1="A",
+            label_2="B",
+        )
+    )
+
+    assert tuple(output.shape) == (1, 555, 777, 3)
+    assert output.dtype is torch.float32
+    assert float(output.min()) >= 0.0
+    assert float(output.max()) <= 1.0
+
+
+@requires_torch
+def test_node_maps_adaptive_label_after_gap_independently_from_image_label_gap(monkeypatch) -> None:
+    captured = {}
+
+    def fake_render_adaptive_mosaic(*args, **kwargs):
+        captured["adaptive_settings"] = kwargs["adaptive_settings"]
+        return Image.new("RGB", (320, 480), (0, 0, 0))
+
+    monkeypatch.setattr(nodes, "render_adaptive_mosaic", fake_render_adaptive_mosaic)
+
+    node = HLTSlideComposer()
+    (output,) = node.compose(
+        **_compose_kwargs(
+            layout="adaptive_mosaic",
+            image_label_gap=3,
+            label_after_gap=37,
+            label_1="A",
+        )
+    )
+
+    assert tuple(output.shape) == (1, 480, 320, 3)
+    assert captured["adaptive_settings"].label_after_gap == 37
+    assert captured["adaptive_settings"].label_after_gap != 3
+
+
+@requires_torch
+def test_historical_layouts_keep_image_and_label_gap_settings(monkeypatch) -> None:
+    captured = {}
+
+    def fake_render_vertical_stack(*args, **kwargs):
+        settings = kwargs["settings"]
+        captured["image_label_gap"] = settings.image_label_gap
+        captured["label_after_gap"] = settings.label_after_gap
+        return Image.new("RGB", (320, 480), (0, 0, 0))
+
+    monkeypatch.setattr(nodes, "render_vertical_stack", fake_render_vertical_stack)
+
+    node = HLTSlideComposer()
+    (output,) = node.compose(
+        **_compose_kwargs(
+            layout="vertical_stack",
+            image_label_gap=3,
+            label_after_gap=37,
+            label_1="A",
+        )
+    )
+
+    assert tuple(output.shape) == (1, 480, 320, 3)
+    assert captured == {"image_label_gap": 3, "label_after_gap": 37}
 
 
 @requires_torch

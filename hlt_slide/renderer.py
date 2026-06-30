@@ -197,7 +197,9 @@ def measure_adaptive_mosaic_layout(
     render_settings = settings or RenderSettings()
     active_items = _active_items(items, "adaptive_mosaic")
     mosaic_settings = _adaptive_settings_from_render_settings(
-        render_settings, adaptive_settings
+        render_settings,
+        adaptive_settings,
+        canvas_size,
     )
     sources = _source_infos(active_items)
     title_fit = _measure_title(
@@ -428,6 +430,7 @@ def _label_measure_widths(
 def _adaptive_settings_from_render_settings(
     settings: RenderSettings,
     adaptive_settings: AdaptiveMosaicSettings | None,
+    canvas_size: CanvasSize,
 ) -> AdaptiveMosaicSettings:
     base = adaptive_settings or AdaptiveMosaicSettings()
     return AdaptiveMosaicSettings(
@@ -436,8 +439,8 @@ def _adaptive_settings_from_render_settings(
         preserve_aspect=True,
         hero_index=base.hero_index,
         gap=settings.inner_padding if adaptive_settings is None else base.gap,
-        minimum_image_width=base.minimum_image_width,
-        minimum_image_height=base.minimum_image_height,
+        minimum_image_width=max(24, round(canvas_size.width * 0.08)),
+        minimum_image_height=max(24, round(canvas_size.height * 0.05)),
         label_padding_top=settings.label_padding_top,
         label_padding_bottom=settings.label_padding_bottom,
         label_after_gap=base.label_after_gap if adaptive_settings is not None else settings.label_after_gap,

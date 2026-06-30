@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from PIL import Image, ImageDraw
 
+import hlt_slide.renderer as renderer_module
 from hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
 from hlt_slide.config import CanvasSize
 from hlt_slide.renderer import RenderSettings, SlideItem, render_adaptive_mosaic
@@ -114,6 +115,70 @@ def test_adaptive_renderer_accepts_all_internal_strategies() -> None:
 
     assert all(output.mode == "RGB" for output in outputs)
     assert all(output.size == (420, 720) for output in outputs)
+
+
+def test_adaptive_minimum_image_size_uses_explicit_resolved_canvas(monkeypatch) -> None:
+    captured = _capture_mosaic_settings(monkeypatch)
+
+    output = render_adaptive_mosaic(
+        mixed_items()[:1],
+        canvas_size=CanvasSize(320, 480),
+        settings=RenderSettings(corner_radius=0, border_width=0),
+    )
+
+    assert output.size == (320, 480)
+    assert captured[-1].minimum_image_width == 26
+    assert captured[-1].minimum_image_height == 24
+
+
+def test_adaptive_minimum_image_size_uses_large_preset_not_custom_fields(monkeypatch) -> None:
+    captured = _capture_mosaic_settings(monkeypatch)
+
+    output = render_adaptive_mosaic(
+        mixed_items()[:1],
+        canvas_size=None,
+        settings=RenderSettings(
+            canvas_preset="9:16 4K · 2160x3840",
+            corner_radius=0,
+            border_width=0,
+        ),
+    )
+
+    assert output.size == (2160, 3840)
+    assert captured[-1].minimum_image_width == 173
+    assert captured[-1].minimum_image_height == 192
+
+
+def test_adaptive_minimum_image_size_uses_background_size_canvas(monkeypatch) -> None:
+    captured = _capture_mosaic_settings(monkeypatch)
+
+    output = render_adaptive_mosaic(
+        mixed_items()[:1],
+        canvas_size=None,
+        background_image=background((777, 555)),
+        settings=RenderSettings(
+            canvas_preset="Background size",
+            background_mode="image",
+            corner_radius=0,
+            border_width=0,
+        ),
+    )
+
+    assert output.size == (777, 555)
+    assert captured[-1].minimum_image_width == 62
+    assert captured[-1].minimum_image_height == 28
+
+
+def _capture_mosaic_settings(monkeypatch):
+    captured = []
+    original = renderer_module.select_adaptive_mosaic
+
+    def wrapped_select_adaptive_mosaic(canvas_size, sources, settings, **kwargs):
+        captured.append(settings)
+        return original(canvas_size, sources, settings, **kwargs)
+
+    monkeypatch.setattr(renderer_module, "select_adaptive_mosaic", wrapped_select_adaptive_mosaic)
+    return captured
 
 
 def _has_pixel_matching(image: Image.Image, predicate) -> bool:

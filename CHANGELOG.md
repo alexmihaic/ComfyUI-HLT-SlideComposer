@@ -27,6 +27,10 @@ All notable changes to this project are documented in this file.
 - Adaptive images always use proportional transparent containment.
 - Documentation and examples updated for `v0.2.0`.
 
+### Fixed
+
+- Fixed adaptive label spacing mapping and minimum-size scaling against the resolved canvas.
+
 ### Compatibility
 
 - Historical widget defaults remain unchanged.

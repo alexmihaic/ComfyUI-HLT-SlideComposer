@@ -274,11 +274,9 @@ class HLTSlideComposer:
                     preserve_aspect=True,
                     hero_index=_adaptive_hero_index(adaptive_hero, image_pairs),
                     gap=inner_padding,
-                    minimum_image_width=max(24, round(custom_width * 0.08)),
-                    minimum_image_height=max(24, round(custom_height * 0.05)),
                     label_padding_top=label_padding_top,
                     label_padding_bottom=label_padding_bottom,
-                    label_after_gap=image_label_gap,
+                    label_after_gap=label_after_gap,
                     label_min_height=label_min_height,
                 ),
             )
