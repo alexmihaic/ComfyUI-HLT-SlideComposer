@@ -7,6 +7,8 @@ All notable changes to this project are documented in this file.
 ### Added
 
 - Experimental pure text-layout engine for the future `HLT · Text Composer` node.
+- Experimental Pillow text renderer for the future `HLT · Text Composer` node.
+- Role-based typography, automatic alignment, accent targeting, backgrounds, logo composition and debug rendering.
 
 ## 0.2.0 - 2026-06-30
 

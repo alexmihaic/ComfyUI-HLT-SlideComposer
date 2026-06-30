@@ -125,3 +125,15 @@ Geometría:
 Fallback:
 
 - si hay más de dos bloques, lanza error.
+
+## Alineación en el renderer
+
+Phase 9B mantiene la geometría de este documento y añade reglas de renderizado:
+
+- `centered_statement`: horizontal `center`, vertical `center`.
+- `vertical_stack`: horizontal `left`, vertical `center`.
+- `split_2`: horizontal `left`, vertical `center`.
+- `grid_2x2`: horizontal `left`, vertical `center`.
+- `editorial_quote`: bloque principal `left/center`, segundo bloque `right/bottom`.
+
+Los overrides globales del renderer pueden sustituir estas reglas sin modificar la geometría.

@@ -106,3 +106,16 @@ No se añaden presets de estilo en Phase 9A. Quedan para una fase posterior.
 - El core geométrico debe poder probarse con Python puro.
 - La integración futura debe mantener separadas las capas core, Pillow, Torch y ComfyUI.
 - El contrato de `HLTSlideComposer` no debe cambiar por este nodo.
+
+## Phase 9B renderer foundation
+
+Phase 9B añade una base de renderizado Pillow sin registrar el nodo. La API interna propuesta queda:
+
+```text
+measure_text_composition(...)
+render_text_composition(...)
+```
+
+`measure_text_composition` prepara canvas, bloques activos, acento, reserva de logo, geometría y fitting tipográfico. `render_text_composition` dibuja fondo, texto, logo y debug sobre una imagen RGB.
+
+Esta API sigue siendo interna hasta Phase 9C.

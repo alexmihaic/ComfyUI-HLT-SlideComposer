@@ -49,13 +49,15 @@ La línea v0.3.0 está prevista como primera versión experimental del Text Comp
 - Diagnósticos legibles.
 - Script de diagramas sintéticos de geometría.
 - Tests unitarios y de contrato visual.
+- Renderer Pillow experimental `hlt_slide.text_renderer`.
+- Plan de medición `measure_text_composition`.
+- Render final RGB `render_text_composition`.
+- Script de renders tipográficos reales.
 
 ## Pendiente
 
 - No existe todavía un nodo instalable `HLT · Text Composer`.
 - No se registra `HLTTextComposer` en `NODE_CLASS_MAPPINGS`.
-- No se renderiza tipografía final.
-- No se componen fondos, overlays ni logo dentro del renderer final.
 - No hay workflow de ComfyUI para Text Composer.
 - No hay presets de estilo.
 
@@ -68,14 +70,25 @@ La línea v0.3.0 está prevista como primera versión experimental del Text Comp
 - Los roles controlan jerarquía geométrica, pero no estilo: `headline` puede recibir más espacio que `caption`, sin decidir todavía fuente, color o tracking.
 - El core se mantiene independiente de ComfyUI porque no importa `torch`, `comfy` ni `nodes`; solo usa Python y los modelos `CanvasSize` y `Rect`.
 
-## Open decisions for Phase 9B
+## Decisions made in Phase 9B
 
-- Tamaños base de fuente por rol.
-- Color de acento y relación con el rojo HLT.
-- Alineación por bloque o alineación global.
-- Límites de líneas por rol.
-- Comportamiento exacto de truncado.
-- Fondos, overlays y opacidad.
-- Logo: reserva, tamaño y convivencia con el texto.
-- Posible resaltado de palabras.
-- Presets HLT futuros.
+- Se cierran estilos base por rol para el canvas de 1080 px.
+- Se usa alineación global con modo `auto`.
+- Se cierran límites de líneas por rol.
+- El truncado usa el comportamiento existente de `text_engine.py` y emite warning cuando corresponde.
+- El clipping queda activado por defecto.
+- El fondo reutiliza reglas del Slide Composer: sólido, imagen e imagen con overlay.
+- El logo es opcional y puede reservar espacio antes de calcular la geometría.
+- El acento se aplica al bloque completo.
+- El resaltado parcial de palabras queda pospuesto.
+- Los presets visuales quedan pospuestos.
+
+## Open decisions for Phase 9C
+
+- Orden definitivo de widgets.
+- Defaults públicos exactos.
+- Qué controles exponer frente a mantener internos.
+- Tamaño inicial del nodo.
+- Workflow público.
+- Compatibilidad de widget-to-input.
+- Estrategia de registro junto a `HLTSlideComposer`.
