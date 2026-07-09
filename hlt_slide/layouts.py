@@ -232,6 +232,99 @@ def calculate_grid_2x2(
     )
 
 
+def calculate_comparison(
+    canvas_size: CanvasSize,
+    *,
+    image_count: int,
+    title_height: int = 0,
+    label_heights: tuple[int, ...] = (),
+    reserve_footer: bool = False,
+    footer_height: int = 0,
+    metrics: GridMetrics | None = None,
+) -> SlideLayout:
+    if image_count < 1 or image_count > 4:
+        raise LayoutOverflowError(
+            prefixed_message(f"comparison requires 1 to 4 images, got {image_count}.")
+        )
+    if image_count == 1:
+        return calculate_vertical_stack(
+            canvas_size,
+            image_count=1,
+            title_height=title_height,
+            label_heights=label_heights,
+            reserve_footer=reserve_footer,
+            footer_height=footer_height,
+            metrics=_comparison_vertical_metrics(metrics),
+        )
+
+    labels = _normalized_label_heights(label_heights, image_count)
+    rows = _comparison_rows(canvas_size, image_count)
+    base_metrics = metrics or GridMetrics(footer_height=footer_height)
+    scaled = _scale_grid_metrics(base_metrics, canvas_size.width)
+    footer = scaled.footer_height if reserve_footer else 0
+
+    normal = _try_grid_layout(
+        canvas_size,
+        rows=rows,
+        title_height=title_height,
+        label_heights=labels,
+        reserve_footer=reserve_footer,
+        footer_height=footer,
+        outer_margin=scaled.outer_margin,
+        top_margin=scaled.top_margin,
+        bottom_margin=scaled.bottom_margin,
+        title_gap=scaled.title_gap,
+        row_gap=scaled.row_gap,
+        column_gap=scaled.column_gap,
+        image_label_gap=scaled.image_label_gap,
+        label_after_gap=scaled.label_after_gap,
+    )
+    if normal is not None:
+        return normal
+
+    reduced = _try_grid_layout(
+        canvas_size,
+        rows=rows,
+        title_height=title_height,
+        label_heights=labels,
+        reserve_footer=reserve_footer,
+        footer_height=footer,
+        outer_margin=scaled.outer_margin,
+        top_margin=scaled.top_margin,
+        bottom_margin=scaled.bottom_margin,
+        title_gap=scaled.min_title_gap,
+        row_gap=scaled.min_row_gap,
+        column_gap=scaled.min_column_gap,
+        image_label_gap=scaled.min_image_label_gap,
+        label_after_gap=scaled.min_label_after_gap,
+    )
+    if reduced is not None:
+        return reduced
+
+    required = _required_grid_non_image_space(
+        rows=rows,
+        title_height=title_height,
+        label_heights=labels,
+        reserve_footer=reserve_footer,
+        footer_height=footer,
+        top_margin=scaled.top_margin,
+        bottom_margin=scaled.bottom_margin,
+        title_gap=scaled.min_title_gap,
+        row_gap=scaled.min_row_gap,
+        image_label_gap=scaled.min_image_label_gap,
+        label_after_gap=scaled.min_label_after_gap,
+    )
+    raise LayoutOverflowError(
+        prefixed_message(
+            "comparison overflow: "
+            f"canvas={canvas_size.width}x{canvas_size.height}; "
+            f"images={image_count}; title_height={title_height}; "
+            f"label_heights={labels}; required_non_image={required}; "
+            f"available={canvas_size.height}."
+        )
+    )
+
+
 def _normalized_label_heights(label_heights: tuple[int, ...], image_count: int) -> tuple[int, ...]:
     padded = tuple(max(0, height) for height in label_heights[:image_count])
     if len(padded) < image_count:
@@ -450,6 +543,37 @@ def _grid_rows(image_count: int) -> tuple[tuple[int, ...], ...]:
     if image_count == 3:
         return ((0,), (1, 2))
     return ((0, 1), (2, 3))
+
+
+def _comparison_rows(canvas_size: CanvasSize, image_count: int) -> tuple[tuple[int, ...], ...]:
+    if image_count == 1:
+        return ((0,),)
+    if image_count == 2:
+        if canvas_size.width >= canvas_size.height:
+            return ((0, 1),)
+        return ((0,), (1,))
+    if image_count == 3:
+        return ((0, 1), (2,))
+    return ((0, 1), (2, 3))
+
+
+def _comparison_vertical_metrics(metrics: GridMetrics | None) -> VerticalStackMetrics | None:
+    if metrics is None:
+        return None
+    return VerticalStackMetrics(
+        outer_margin=metrics.outer_margin,
+        top_margin=metrics.top_margin,
+        bottom_margin=metrics.bottom_margin,
+        title_gap=metrics.title_gap,
+        block_gap=metrics.row_gap,
+        image_label_gap=metrics.image_label_gap,
+        label_after_gap=metrics.label_after_gap,
+        footer_height=metrics.footer_height,
+        min_title_gap=metrics.min_title_gap,
+        min_block_gap=metrics.min_row_gap,
+        min_image_label_gap=metrics.min_image_label_gap,
+        min_label_after_gap=metrics.min_label_after_gap,
+    )
 
 
 def _grid_columns(

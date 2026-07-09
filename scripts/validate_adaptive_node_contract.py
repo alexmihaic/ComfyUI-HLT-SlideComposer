@@ -129,8 +129,8 @@ def main() -> int:
     assert required["adaptive_strategy"][1]["default"] == "balanced"
     assert required["adaptive_hero"][0] == ("auto", "image_1", "image_2", "image_3", "image_4")
     assert required["adaptive_hero"][1]["default"] == "auto"
-    assert list(required)[-2:] == ["adaptive_strategy", "adaptive_hero"]
-    for layout in ("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic"):
+    assert list(required)[-3:] == ["adaptive_strategy", "adaptive_hero", "style_preset"]
+    for layout in ("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic", "comparison"):
         assert layout in required["layout"][0]
 
     node = node_class()

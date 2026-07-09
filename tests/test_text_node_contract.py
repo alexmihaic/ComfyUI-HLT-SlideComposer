@@ -79,10 +79,11 @@ def test_slide_composer_contract_still_has_historical_widget_order() -> None:
     required = importlib.import_module("nodes").HLTSlideComposer.INPUT_TYPES()["required"]
 
     assert list(required)[0] == "image_1"
-    assert required["layout"][0] == ("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic")
-    assert list(required)[-8:] == [
+    assert required["layout"][0] == ("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic", "comparison")
+    assert list(required)[-9:] == [
         "label_padding_top", "label_padding_bottom", "label_after_gap", "label_min_height",
         "label_vertical_align", "label_clip", "adaptive_strategy", "adaptive_hero",
+        "style_preset",
     ]
 
 

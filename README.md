@@ -45,6 +45,7 @@ It outputs a standard ComfyUI `IMAGE` tensor.
 - `grid_2x2` layout.
 - `auto_social` layout selector.
 - `adaptive_mosaic` layout for mixed aspect ratios.
+- `comparison` layout for before/after and debug review slides.
 - 9:16, 4:5, 3:4, square and custom canvas sizes.
 - Solid or image background.
 - Overlay opacity.
@@ -122,6 +123,7 @@ Suggested first settings:
 ```text
 canvas_preset = 9:16 Social · 1080x1920
 layout = auto_social
+style_preset = hlt_editorial_red
 background_mode = solid
 background_color = #000000
 title_color = #E92124
@@ -135,6 +137,25 @@ With four images:
 ```text
 auto_social -> grid_2x2
 ```
+
+## Style Presets
+
+`style_preset` lets you choose a complete visual direction without adjusting all
+spacing and color controls manually.
+
+Available presets:
+
+| Preset | Use |
+| --- | --- |
+| `custom` | Keeps the current behavior and uses the explicit controls as-is. |
+| `hlt_editorial_red` | Black HLT editorial look with red title/labels and dark cells. |
+| `hlt_dark_review` | Compact dark review style with quieter labels for generation batches. |
+| `hlt_clean_portfolio` | Light portfolio/presentation style with wider margins and dark text. |
+| `hlt_poster_bold` | Larger title, more spacing and a stronger poster-like presence. |
+
+Existing controls still work with presets. If you change a color, margin, font
+size or radius manually, that value is preserved and the preset only fills the
+remaining default controls.
 
 ## Example Workflow
 
@@ -170,6 +191,40 @@ Notes:
 | `grid_2x2` | Grid behavior for 1-4 images; with four images it creates a regular 2 x 2 slide. |
 | `auto_social` | Uses `vertical_stack` for 1-3 images and `grid_2x2` for 4 images. |
 | `adaptive_mosaic` | Scores several proportional layouts for mixed portrait, landscape and square images. |
+| `comparison` | Review layout for original/ref/result/debug comparisons. |
+
+## Comparison Layout / NKD Review Workflow
+
+Use `layout = comparison` when reviewing generation workflows with a reference,
+final output and optional diagnostic image. It does not depend on NKD or any
+other package; it only consumes standard ComfyUI `IMAGE` inputs.
+
+Suggested connections:
+
+```text
+NKD Presampling ref_0 -> image_1
+NKD Postsampling image -> image_2
+NKD Postsampling debug_difference -> image_3
+Optional alternate result -> image_4
+```
+
+Suggested labels:
+
+```text
+label_1 = REF_0
+label_2 = RESULTADO
+label_3 = DEBUG
+label_4 = VARIANTE
+```
+
+Behavior:
+
+- 1 image falls back to a single-image vertical composition.
+- 2 images render side by side on square/horizontal canvases and stacked on
+  portrait canvases such as 9:16 or 4:5.
+- 3 images place `image_1` and `image_2` as the primary comparison pair, with
+  `image_3` below as a debug/difference cell.
+- 4 images use an editorial 2 x 2 comparison grid.
 
 ## Adaptive Mosaic
 

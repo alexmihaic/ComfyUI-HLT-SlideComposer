@@ -194,6 +194,50 @@ def test_node_executes_grid_and_auto_social_with_optional_images() -> None:
 
 
 @requires_torch
+@pytest.mark.parametrize("count", [2, 3, 4])
+def test_node_executes_comparison_layout_with_two_to_four_images(count: int) -> None:
+    node = HLTSlideComposer()
+    overrides = {
+        "layout": "comparison",
+        "title": "NKD REVIEW",
+        "label_1": "REF_0",
+        "label_2": "RESULTADO",
+        "label_3": "DEBUG",
+        "label_4": "VARIANTE",
+        "corner_radius": 0,
+    }
+    if count >= 2:
+        overrides["image_2"] = _image((0.0, 1.0, 0.0))
+    if count >= 3:
+        overrides["image_3"] = _image((0.0, 0.0, 1.0))
+    if count >= 4:
+        overrides["image_4"] = _image((1.0, 1.0, 0.0))
+
+    (output,) = node.compose(**_compose_kwargs(**overrides))
+
+    assert tuple(output.shape) == (1, 480, 320, 3)
+    assert output.dtype is torch.float32
+    assert float(output.min()) >= 0.0
+    assert float(output.max()) <= 1.0
+
+
+@requires_torch
+def test_node_comparison_layout_falls_back_safely_with_one_image() -> None:
+    node = HLTSlideComposer()
+
+    (output,) = node.compose(
+        **_compose_kwargs(
+            layout="comparison",
+            title="ONE",
+            label_1="REF_0",
+        )
+    )
+
+    assert tuple(output.shape) == (1, 480, 320, 3)
+    assert output.dtype is torch.float32
+
+
+@requires_torch
 def test_node_executes_background_logo_mask_debug_and_background_size() -> None:
     node = HLTSlideComposer()
     background = _image((0.25, 0.35, 0.45), size=(77, 55))
@@ -447,6 +491,31 @@ def test_historical_layouts_keep_image_and_label_gap_settings(monkeypatch) -> No
 
     assert tuple(output.shape) == (1, 480, 320, 3)
     assert captured == {"image_label_gap": 3, "label_after_gap": 37}
+
+
+@requires_torch
+def test_node_applies_style_preset_without_overriding_custom_controls(monkeypatch) -> None:
+    captured = {}
+
+    def fake_render_vertical_stack(*args, **kwargs):
+        captured["settings"] = kwargs["settings"]
+        return Image.new("RGB", (320, 480), (0, 0, 0))
+
+    monkeypatch.setattr(nodes, "render_vertical_stack", fake_render_vertical_stack)
+
+    node = HLTSlideComposer()
+    (output,) = node.compose(
+        **_compose_kwargs(
+            style_preset="hlt_clean_portfolio",
+            background_color="#223344",
+        )
+    )
+
+    assert tuple(output.shape) == (1, 480, 320, 3)
+    assert captured["settings"].background_color == "#223344"
+    assert captured["settings"].title_color == "#161616"
+    assert captured["settings"].label_color == "#303030"
+    assert captured["settings"].outer_margin == 88
 
 
 @requires_torch

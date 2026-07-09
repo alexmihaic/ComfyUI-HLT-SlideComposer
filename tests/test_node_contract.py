@@ -124,6 +124,7 @@ def test_input_types_define_required_optional_and_defaults() -> None:
         "grid_2x2",
         "auto_social",
         "adaptive_mosaic",
+        "comparison",
     )
     assert required["layout"][1]["default"] == "vertical_stack"
     assert required["adaptive_strategy"][0] == ("balanced", "editorial", "compact")
@@ -136,13 +137,21 @@ def test_input_types_define_required_optional_and_defaults() -> None:
         "image_4",
     )
     assert required["adaptive_hero"][1]["default"] == "auto"
+    assert required["style_preset"][0] == (
+        "custom",
+        "hlt_editorial_red",
+        "hlt_dark_review",
+        "hlt_clean_portfolio",
+        "hlt_poster_bold",
+    )
+    assert required["style_preset"][1]["default"] == "custom"
     assert required["background_color"][1]["default"] == "#000000"
     assert required["title_color"][1]["default"] == "#E92124"
     assert required["label_color"][1]["default"] == "#E92124"
     assert required["contain_fill_mode"][0] == ("transparent", "cell_color")
     assert required["contain_fill_mode"][1]["default"] == "transparent"
     assert required["debug_layout"][1]["default"] is False
-    assert list(required)[-8:] == [
+    assert list(required)[-9:] == [
         "label_padding_top",
         "label_padding_bottom",
         "label_after_gap",
@@ -151,6 +160,7 @@ def test_input_types_define_required_optional_and_defaults() -> None:
         "label_clip",
         "adaptive_strategy",
         "adaptive_hero",
+        "style_preset",
     ]
     assert required["label_padding_top"][1] == {"default": 6, "min": 0, "max": 256, "step": 1}
     assert required["label_padding_bottom"][1] == {"default": 10, "min": 0, "max": 256, "step": 1}
@@ -219,6 +229,7 @@ def test_complete_required_widget_order_is_stable() -> None:
         "label_clip",
         "adaptive_strategy",
         "adaptive_hero",
+        "style_preset",
     ]
 
 

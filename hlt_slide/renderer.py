@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Any
 
 from PIL import Image, ImageDraw
 
@@ -20,6 +21,7 @@ from .image_utils import compose_image_in_rect, fit_image_to_box
 from .layouts import (
     GridMetrics,
     SlideLayout,
+    calculate_comparison,
     VerticalStackMetrics,
     calculate_grid_2x2,
     calculate_vertical_stack,
@@ -83,6 +85,94 @@ class RenderSettings:
     invert_logo_mask: bool = True
     debug_layout: bool = False
     layout: str = "vertical_stack"
+
+
+STYLE_PRESETS: dict[str, dict[str, Any]] = {
+    "custom": {},
+    "hlt_editorial_red": {
+        "background_color": "#000000",
+        "title_color": "#E92124",
+        "label_color": "#E92124",
+        "border_color": "#E92124",
+        "cell_background_color": "#111111",
+        "outer_margin": 72,
+        "top_margin": 72,
+        "bottom_margin": 60,
+        "title_gap": 42,
+        "block_gap": 34,
+        "image_label_gap": 14,
+        "inner_padding": 30,
+        "corner_radius": 22,
+    },
+    "hlt_dark_review": {
+        "background_color": "#0B0D10",
+        "title_color": "#E92124",
+        "label_color": "#B7BBC2",
+        "border_color": "#2A2F36",
+        "cell_background_color": "#15181D",
+        "outer_margin": 54,
+        "top_margin": 52,
+        "bottom_margin": 48,
+        "title_gap": 28,
+        "block_gap": 22,
+        "image_label_gap": 10,
+        "inner_padding": 18,
+        "corner_radius": 14,
+        "label_font_size": 28,
+    },
+    "hlt_clean_portfolio": {
+        "background_color": "#F3F0E8",
+        "title_color": "#161616",
+        "label_color": "#303030",
+        "border_color": "#D8D2C8",
+        "cell_background_color": "#FFFFFF",
+        "outer_margin": 88,
+        "top_margin": 84,
+        "bottom_margin": 72,
+        "title_gap": 44,
+        "block_gap": 38,
+        "image_label_gap": 16,
+        "inner_padding": 34,
+        "corner_radius": 12,
+    },
+    "hlt_poster_bold": {
+        "background_color": "#000000",
+        "title_color": "#E92124",
+        "label_color": "#F3F0E8",
+        "border_color": "#E92124",
+        "cell_background_color": "#090909",
+        "outer_margin": 84,
+        "top_margin": 90,
+        "bottom_margin": 76,
+        "title_gap": 58,
+        "block_gap": 44,
+        "image_label_gap": 18,
+        "inner_padding": 36,
+        "corner_radius": 28,
+        "title_font_size": 88,
+        "label_font_size": 32,
+        "max_title_lines": 2,
+    },
+}
+
+STYLE_PRESET_NAMES: tuple[str, ...] = tuple(STYLE_PRESETS)
+
+
+def apply_style_preset(settings: RenderSettings, preset_name: str) -> RenderSettings:
+    """Apply preset defaults without overriding values already customized by the caller."""
+    preset_values = STYLE_PRESETS.get(preset_name, STYLE_PRESETS["custom"])
+    if not preset_values:
+        return settings
+
+    default_settings = RenderSettings()
+    updates = {
+        field_name: preset_value
+        for field_name, preset_value in preset_values.items()
+        if getattr(settings, field_name) == getattr(default_settings, field_name)
+    }
+    if not updates:
+        return settings
+    return replace(settings, **updates)
 
 
 def render_vertical_stack(
@@ -278,7 +368,7 @@ def _source_infos(items: tuple[SlideItem, ...]) -> tuple[SourceImageInfo, ...]:
 def _resolve_layout(requested_layout: str, active_image_count: int) -> str:
     if requested_layout == "auto_social":
         return select_auto_social_layout(active_image_count)
-    if requested_layout in {"vertical_stack", "grid_2x2"}:
+    if requested_layout in {"vertical_stack", "grid_2x2", "comparison"}:
         return requested_layout
     raise HLTSlideError(prefixed_message(f"Unsupported layout: {requested_layout!r}."))
 
@@ -315,6 +405,26 @@ def _calculate_layout(
         )
     if layout_name == "grid_2x2":
         return calculate_grid_2x2(
+            canvas_size,
+            image_count=image_count,
+            title_height=title_height,
+            label_heights=label_heights,
+            reserve_footer=reserve_footer,
+            footer_height=footer_height,
+            metrics=GridMetrics(
+                outer_margin=render_settings.outer_margin,
+                top_margin=render_settings.top_margin,
+                bottom_margin=render_settings.bottom_margin,
+                title_gap=render_settings.title_gap,
+                row_gap=render_settings.block_gap,
+                column_gap=render_settings.inner_padding,
+                image_label_gap=render_settings.image_label_gap,
+                label_after_gap=render_settings.label_after_gap,
+                footer_height=footer_height,
+            ),
+        )
+    if layout_name == "comparison":
+        return calculate_comparison(
             canvas_size,
             image_count=image_count,
             title_height=title_height,
@@ -417,6 +527,16 @@ def _label_measure_widths(
     content_width = max(1, content_width)
     if layout_name == "vertical_stack" or image_count == 1:
         return tuple(content_width for _ in range(image_count))
+    if layout_name == "comparison":
+        column_gap = _scaled(settings.inner_padding, scale)
+        column_width = max(1, (content_width - column_gap) // 2)
+        if image_count == 2:
+            if canvas_size.width >= canvas_size.height:
+                return (column_width, column_width)
+            return (content_width, content_width)
+        if image_count == 3:
+            return (column_width, column_width, content_width)
+        return (column_width, column_width, column_width, column_width)
 
     column_gap = _scaled(settings.inner_padding, scale)
     column_width = max(1, (content_width - column_gap) // 2)
