@@ -96,54 +96,6 @@ def kwargs(**overrides):
     return base
 
 
-def text_kwargs(**overrides):
-    base = {
-        "text_1": "RUNTIME",
-        "text_2": "",
-        "text_3": "",
-        "text_4": "",
-        "canvas_preset": "Custom",
-        "custom_width": 160,
-        "custom_height": 240,
-        "layout": "auto_text",
-        "text_1_role": "headline",
-        "text_2_role": "headline",
-        "text_3_role": "headline",
-        "text_4_role": "headline",
-        "split_axis": "auto",
-        "background_mode": "solid",
-        "background_color": "#000000",
-        "background_fit": "cover",
-        "background_opacity": 1.0,
-        "overlay_opacity": 0.0,
-        "text_color": "#F3F0E8",
-        "accent_color": "#E92124",
-        "accent_target": "none",
-        "font_path": "",
-        "font_scale": 1.0,
-        "horizontal_align": "auto",
-        "vertical_align": "auto",
-        "uppercase": False,
-        "preserve_words": True,
-        "clipping": True,
-        "outer_margin": 24,
-        "top_margin": 24,
-        "bottom_margin": 20,
-        "block_gap": 12,
-        "inner_padding": 12,
-        "logo_width_percent": 18.0,
-        "logo_max_height_percent": 8.0,
-        "logo_opacity": 1.0,
-        "logo_bottom_offset": 0,
-        "invert_logo_mask": True,
-        "reserve_logo_space": True,
-        "logo_gap": 12,
-        "debug_layout": False,
-    }
-    base.update(overrides)
-    return base
-
-
 def assert_image_tensor(tensor: torch.Tensor, size: tuple[int, int]) -> None:
     width, height = size
     assert tuple(tensor.shape) == (1, height, width, 3), tuple(tensor.shape)
@@ -156,9 +108,7 @@ def assert_image_tensor(tensor: torch.Tensor, size: tuple[int, int]) -> None:
 def main() -> int:
     package = load_custom_node_package()
     assert "HLTSlideComposer" in package.NODE_CLASS_MAPPINGS
-    assert "HLTTextComposer" in package.NODE_CLASS_MAPPINGS
     assert package.NODE_DISPLAY_NAME_MAPPINGS["HLTSlideComposer"] == "HLT · Slide Composer"
-    assert package.NODE_DISPLAY_NAME_MAPPINGS["HLTTextComposer"] == "HLT · Text Composer"
 
     node_class = package.NODE_CLASS_MAPPINGS["HLTSlideComposer"]
     assert node_class.__module__ == "comfyui_hlt_slide_composer.nodes"
@@ -254,37 +204,6 @@ def main() -> int:
         )
     )[0]
     assert_image_tensor(adaptive, (160, 240))
-
-    text_node_class = package.NODE_CLASS_MAPPINGS["HLTTextComposer"]
-    text_inputs = text_node_class.INPUT_TYPES()
-    assert text_inputs["required"]["text_1"] == ("STRING", {"default": "YOUR TEXT", "multiline": True})
-    assert text_inputs["optional"]["logo_mask"] == ("MASK",)
-    text_node = text_node_class()
-
-    text_custom = text_node.compose(**text_kwargs(text_1="ONE", text_2="TWO", text_3="THREE"))[0]
-    assert_image_tensor(text_custom, (160, 240))
-
-    text_background_sized = text_node.compose(
-        **text_kwargs(
-            canvas_preset="Background size",
-            background_mode="image_with_overlay",
-            background_image=image((0.2, 0.3, 0.5), size=(80, 120)),
-            overlay_opacity=0.25,
-            text_1="BACKGROUND",
-            text_2="SIZE",
-        )
-    )[0]
-    assert_image_tensor(text_background_sized, (80, 120))
-
-    text_logo = text_node.compose(
-        **text_kwargs(
-            text_1="LOGO",
-            logo_image=image((1.0, 0.0, 0.0), size=(40, 20)),
-            logo_mask=mask(size=(40, 20)),
-            debug_layout=True,
-        )
-    )[0]
-    assert_image_tensor(text_logo, (160, 240))
 
     print("HLT Comfy node integration validation OK")
     return 0

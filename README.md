@@ -16,7 +16,7 @@ The node appears under:
 HLT / Composition
 ```
 
-Current prepared release: `v0.2.0`.
+Current prepared release: `v0.3.0`.
 
 It outputs a standard ComfyUI `IMAGE` tensor.
 
@@ -269,12 +269,13 @@ Technical details: [docs/ADAPTIVE_MOSAIC.md](docs/ADAPTIVE_MOSAIC.md)
 Validated environment:
 
 ```text
-ComfyUI 0.26.1
-ComfyUI frontend 1.45.19
-Python 3.11.8
-Pillow 10.4.0
+ComfyUI Studio 362
+ComfyUI 0.30.1
+Python 3.12.10
+Pillow 11.3.0
 NumPy 1.26.4
-Torch 2.9.1+cu130
+Torch 2.10.0+cu130
+CUDA 13.0
 Windows
 ```
 
@@ -293,8 +294,9 @@ Other versions may work, but they have not been verified yet.
 
 ## Roadmap
 
-Future exploration may include more layout controls, broader compatibility QA
-and companion composition tools. HLT Text Composer is not part of this release.
+Future exploration may include more layout controls and broader compatibility QA.
+HLT Text Composer is distributed as a separate custom-node package so both
+repositories can be installed without duplicate node IDs.
 
 ## Uninstall
 

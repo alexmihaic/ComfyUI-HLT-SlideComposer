@@ -59,10 +59,9 @@ def test_root_package_loads_internal_nodes_without_top_level_hlt_slide() -> None
     try:
         module = _load_as_comfyui_package(package_name)
 
-        assert set(module.NODE_CLASS_MAPPINGS) == {"HLTSlideComposer", "HLTTextComposer"}
+        assert set(module.NODE_CLASS_MAPPINGS) == {"HLTSlideComposer"}
         assert module.NODE_DISPLAY_NAME_MAPPINGS == {
             "HLTSlideComposer": "HLT · Slide Composer",
-            "HLTTextComposer": "HLT · Text Composer",
         }
         node_class = module.NODE_CLASS_MAPPINGS["HLTSlideComposer"]
         assert node_class.__name__ == "HLTSlideComposer"
@@ -80,14 +79,12 @@ def test_node_module_exports_class_and_mappings() -> None:
     node_module = importlib.import_module("nodes")
 
     assert hasattr(node_module, "HLTSlideComposer")
-    assert hasattr(node_module, "HLTTextComposer")
+    assert not hasattr(node_module, "HLTTextComposer")
     assert node_module.NODE_CLASS_MAPPINGS == {
         "HLTSlideComposer": node_module.HLTSlideComposer,
-        "HLTTextComposer": node_module.HLTTextComposer,
     }
     assert node_module.NODE_DISPLAY_NAME_MAPPINGS == {
         "HLTSlideComposer": "HLT · Slide Composer",
-        "HLTTextComposer": "HLT · Text Composer",
     }
     assert not hasattr(node_module, "WEB_DIRECTORY")
 

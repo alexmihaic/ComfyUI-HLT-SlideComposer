@@ -2,19 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.3.0 - 2026-08-03
 
 ### Added
 
-- Experimental pure text-layout engine for the future `HLT · Text Composer` node.
-- Experimental Pillow text renderer for the future `HLT · Text Composer` node.
-- Role-based typography, automatic alignment, accent targeting, backgrounds, logo composition and debug rendering.
-- Calibrated Text Composer typography to use the largest fitting role size.
-- Preserved complete words during Text Composer wrapping.
-- Changed future Text Composer default roles to four headlines.
-- Registered the experimental `HLT · Text Composer` ComfyUI node.
-- Added a self-contained experimental Text Composer workflow.
-- Added ComfyUI contract, execution and package-discovery validation for the second node.
+- `comparison` layout for before/after and review compositions.
+- Style presets for HLT editorial, dark review, clean portfolio and bold poster treatments.
+- CPU tests for comparison layout and style presets.
+
+### Changed
+
+- Moved `HLTTextComposer` to its own standalone package and removed its runtime registration here.
+- Preserved the historical `HLTSlideComposer` node ID and appended new widgets after existing controls.
+- Updated compatibility documentation for ComfyUI Studio 362.
 
 ## 0.2.0 - 2026-06-30
 

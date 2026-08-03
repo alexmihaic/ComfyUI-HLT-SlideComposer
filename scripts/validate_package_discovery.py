@@ -57,17 +57,13 @@ def main() -> int:
     sys.meta_path.insert(0, blocker)
     try:
         package = load_custom_node_package()
-        assert list(package.NODE_CLASS_MAPPINGS) == ["HLTSlideComposer", "HLTTextComposer"]
+        assert list(package.NODE_CLASS_MAPPINGS) == ["HLTSlideComposer"]
         assert package.NODE_DISPLAY_NAME_MAPPINGS == {
             "HLTSlideComposer": "HLT · Slide Composer",
-            "HLTTextComposer": "HLT · Text Composer",
         }
         node_class = package.NODE_CLASS_MAPPINGS["HLTSlideComposer"]
         assert node_class.__name__ == "HLTSlideComposer"
         assert node_class.__module__ == f"{PACKAGE_NAME}.nodes"
-        text_node_class = package.NODE_CLASS_MAPPINGS["HLTTextComposer"]
-        assert text_node_class.__name__ == "HLTTextComposer"
-        assert text_node_class.__module__ == f"{PACKAGE_NAME}.nodes"
     finally:
         sys.meta_path.remove(blocker)
         clear_package_modules(PACKAGE_NAME)
