@@ -993,3 +993,12 @@ Cuando se inicie el proyecto por primera vez:
 12. espera aprobación.
 
 No empieces a crear código en la primera respuesta salvo instrucción explícita.
+
+## Aislamiento de contexto
+
+- El alcance predeterminado es este repositorio, los adjuntos y la tarea actual.
+- La mera aparición de «HAZ LO TUYO», «HLT», «ALEX OS» o del nombre del proyecto no autoriza a consultar ALEX OS.
+- No leas otros repositorios, memorias ni documentación histórica por defecto. No actualices ALEX OS ni ninguna memoria automáticamente.
+- No amplíes el alcance sin autorización explícita.
+- Solo consulta ALEX OS cuando el usuario pida afirmativamente: «consulta ALEX OS», «usa el contexto global de HAZ LO TUYO», «contrasta con decisiones históricas», «revisa continuidad entre proyectos» o «actualiza la memoria».
+- En tareas de reparación, auditoría, validación, pruebas, empaquetado o entrega, usa solo el contrato actual, los adjuntos y este repositorio; no consultes ALEX OS, no actualices memoria, no revises otros proyectos y no inicies fases posteriores no autorizadas.

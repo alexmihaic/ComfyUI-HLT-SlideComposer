@@ -68,6 +68,27 @@ def test_fit_text_wraps_words_and_respects_manual_breaks() -> None:
     assert "beta" in manual.lines[1]
 
 
+def test_fit_text_can_preserve_long_words_for_text_composer() -> None:
+    fitted = fit_text(
+        "GENERAR CONTEXTO CRITERIO",
+        font_path=None,
+        preferred_size=42,
+        minimum_size=10,
+        max_width=130,
+        max_height=200,
+        max_lines=5,
+        line_spacing=2,
+        break_long_words=False,
+    )
+
+    assert "GENER" not in fitted.lines
+    assert "AR" not in fitted.lines
+    assert "CONT" not in fitted.lines
+    assert "EXTO" not in fitted.lines
+    assert "CRITE" not in fitted.lines
+    assert "RIO" not in fitted.lines
+
+
 def test_fit_text_reduces_font_before_truncating() -> None:
     fitted = fit_text(
         "A moderately long heading",

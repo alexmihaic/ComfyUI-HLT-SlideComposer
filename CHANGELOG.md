@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.3.0 - 2026-08-03
+
+### Added
+
+- `comparison` layout for before/after and review compositions.
+- Style presets for HLT editorial, dark review, clean portfolio and bold poster treatments.
+- CPU tests for comparison layout and style presets.
+
+### Changed
+
+- Moved `HLTTextComposer` to its own standalone package and removed its runtime registration here.
+- Preserved the historical `HLTSlideComposer` node ID and appended new widgets after existing controls.
+- Updated compatibility documentation for ComfyUI Studio 362.
+
 ## 0.2.0 - 2026-06-30
 
 ### Added

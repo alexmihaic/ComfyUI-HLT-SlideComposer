@@ -15,11 +15,13 @@ if __package__:
         CanvasSize,
         RESOLUTION_PRESETS,
     )
-    from .hlt_slide.exceptions import prefixed_message
+    from .hlt_slide.exceptions import HLTSlideError, prefixed_message
     from .hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
     from .hlt_slide.renderer import (
         RenderSettings,
         SlideItem,
+        STYLE_PRESET_NAMES,
+        apply_style_preset,
         render_adaptive_mosaic,
         render_vertical_stack,
     )
@@ -37,11 +39,13 @@ else:
         CanvasSize,
         RESOLUTION_PRESETS,
     )
-    from hlt_slide.exceptions import prefixed_message
+    from hlt_slide.exceptions import HLTSlideError, prefixed_message
     from hlt_slide.adaptive_mosaic import AdaptiveMosaicSettings
     from hlt_slide.renderer import (
         RenderSettings,
         SlideItem,
+        STYLE_PRESET_NAMES,
+        apply_style_preset,
         render_adaptive_mosaic,
         render_vertical_stack,
     )
@@ -76,7 +80,7 @@ class HLTSlideComposer:
                 "canvas_preset": (preset_names, {"default": "9:16 Social · 1080x1920"}),
                 "custom_width": ("INT", {"default": 1080, "min": 1, "max": 8192, "step": 1}),
                 "custom_height": ("INT", {"default": 1920, "min": 1, "max": 8192, "step": 1}),
-                "layout": (("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic"), {"default": "vertical_stack"}),
+                "layout": (("vertical_stack", "grid_2x2", "auto_social", "adaptive_mosaic", "comparison"), {"default": "vertical_stack"}),
                 "background_mode": (("solid", "image", "image_with_overlay"), {"default": "solid"}),
                 "background_color": ("STRING", {"default": "#000000"}),
                 "background_fit": (("cover", "contain", "stretch"), {"default": "cover"}),
@@ -125,6 +129,7 @@ class HLTSlideComposer:
                 "label_clip": ("BOOLEAN", {"default": True}),
                 "adaptive_strategy": (("balanced", "editorial", "compact"), {"default": "balanced"}),
                 "adaptive_hero": (("auto", "image_1", "image_2", "image_3", "image_4"), {"default": "auto"}),
+                "style_preset": (STYLE_PRESET_NAMES, {"default": "custom"}),
             },
             "optional": {
                 "image_2": ("IMAGE",),
@@ -191,6 +196,7 @@ class HLTSlideComposer:
         adaptive_strategy: str = "balanced",
         adaptive_hero: str = "auto",
         contain_fill_mode: str = "transparent",
+        style_preset: str = "custom",
         image_2: Any | None = None,
         image_3: Any | None = None,
         image_4: Any | None = None,
@@ -254,6 +260,7 @@ class HLTSlideComposer:
             debug_layout=debug_layout,
             layout=layout,
         )
+        settings = apply_style_preset(settings, style_preset)
         canvas_size = _node_canvas_size(canvas_preset, custom_width, custom_height)
         prepared_background = _optional_image_tensor_to_pillow(background_image, "background_image")
         prepared_logo = _optional_image_tensor_to_pillow(logo_image, "logo_image")
